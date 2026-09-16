@@ -297,8 +297,10 @@ async def post_service(request: web.Request, ctx: Any) -> web.Response:
         tails: list[str] = []
         for i, argv in enumerate(steps):
             rc, out, errb = await _run(argv)
+            if i == 0 and rc != 0:
+                continue  # nothing to remove yet: not an error, not worth reporting
             tails.append((out + ("\n" + errb if errb else "")).strip())
-            if rc != 0 and i > 0:  # a missing container to remove is fine
+            if rc != 0:
                 return web.json_response(
                     {"ok": False, "action": action, "error": f"command exited {rc}",
                      "output": "\n".join(tails)[-2000:]},

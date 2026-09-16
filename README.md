@@ -42,6 +42,21 @@ kirocrew restart
 
 `kirocrew app install` takes the local directory that contains `app.json`.
 
+This app ships a Python backend and 13 agents, so KiroCrew asks you to trust it
+before any of that code runs (third-party app code is off by default). Installing
+from the App Store shows a Trust dialog; for a CLI install grant it yourself,
+then enable the app and restart the gateway:
+
+```
+kirocrew config set agent.apps_trusted '["travel-desk"]'
+kirocrew config set agent.apps_trusted_local '["travel-desk"]'
+kirocrew app enable travel-desk
+```
+
+The crew's agents run unattended (a research analyst has nobody to click
+Approve), so their specs auto-approve their own tools; KiroCrew's deny list and
+sensitive-path checks still apply to every command they run.
+
 ## First run
 
 Open Travel Desk in the sidebar. The first time, a setup screen asks how you
@@ -119,6 +134,22 @@ only while you are using it, and only to:
 - Nominatim, for geocoding.
 
 All outbound calls carry a `travel-desk` User-Agent.
+
+## Troubleshooting
+
+- The page shows "Connect your trip planner" again after setup. The saved login
+  stopped working or the service is down; open Settings, Trip planner, and test
+  the connection.
+- The leader reports that `session_create` / `session_send` were refused with
+  "the signed pid mapping for this session did not verify". Those tools need
+  KiroCrew's identity channel, which the OS sandbox provides on Linux (user
+  namespaces) and macOS (`sandbox-exec`). On a host without one, route the two
+  host servers through KiroCrew's MCP broker and restart the gateway:
+  `kirocrew config set mcp_gateway.enabled true` and
+  `kirocrew config set mcp_gateway.stub_servers '["kirocrew-core","kirocrew-dashboard"]'`.
+- Nothing happens after you send a sentence. Check that the app is trusted and
+  enabled (`kirocrew app list`), and that `kirocrew doctor` reports Kiro CLI as
+  signed in.
 
 ## Development
 
@@ -202,6 +233,19 @@ kirocrew restart
 
 `kirocrew app install` 接收包含 `app.json` 的本地目录。
 
+这个 app 带有 Python 后端和 13 个 agent，所以 KiroCrew 会先请你信任它，代码才会运行
+（第三方 app 的代码默认是关闭的）。从 App Store 安装会弹出信任对话框；用命令行安装则
+需要自己授权，然后启用 app 并重启网关：
+
+```
+kirocrew config set agent.apps_trusted '["travel-desk"]'
+kirocrew config set agent.apps_trusted_local '["travel-desk"]'
+kirocrew app enable travel-desk
+```
+
+团队里的 agent 是无人值守运行的（分析师背后没有人点"批准"），所以它们的规格文件对自己的
+工具自动放行；KiroCrew 的命令黑名单和敏感路径检查仍然对它们的每条命令生效。
+
 ## 首次运行
 
 在侧边栏打开 Travel Desk。第一次会出现一个设置页，问你想怎么用行程服务：
@@ -272,6 +316,18 @@ kirocrew restart
 - Nominatim，做地理编码。
 
 所有对外请求都带 `travel-desk` 的 User-Agent。
+
+## 排障
+
+- 设置完成后页面又回到"连接你的行程服务"：保存的登录失效了，或者服务停了。打开设置里的
+  "行程服务"，重新测试连接。
+- 团长说 `session_create` / `session_send` 被拒绝，提示 "the signed pid mapping for this
+  session did not verify"：这些工具需要 KiroCrew 的身份通道，Linux（user namespace）和
+  macOS（`sandbox-exec`）的系统沙箱会提供它。没有沙箱的机器上，把两个宿主服务改走 KiroCrew
+  的 MCP broker，然后重启网关：`kirocrew config set mcp_gateway.enabled true`，
+  `kirocrew config set mcp_gateway.stub_servers '["kirocrew-core","kirocrew-dashboard"]'`。
+- 发了一句话没反应：确认 app 已信任并启用（`kirocrew app list`），并且 `kirocrew doctor`
+  显示 Kiro CLI 已登录。
 
 ## 开发
 
