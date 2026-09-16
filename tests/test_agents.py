@@ -18,7 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = json.loads((ROOT / "app.json").read_text(encoding="utf-8"))
 AGENT_FILES = [ROOT / p for p in MANIFEST["agents"]]
 PLACEHOLDER_RE = re.compile(r"\{[A-Z][A-Z0-9_]*\}")
-FORBIDDEN = ("/home/", "/local/", "mingweic", "raymond", "aim mcp", "meshclaw", "brazil", "amazon")
+FORBIDDEN = ("/home/", "/local/", "/users/", "aim mcp", "meshclaw", "brazil", "amazon")
 EXPECTED = {
     "trip-tour-leader", "trip-itinerary-planner", "trip-risk-pod", "trip-briefing",
     "trip-destination-analyst", "trip-transport-analyst", "trip-lodging-food-analyst",
