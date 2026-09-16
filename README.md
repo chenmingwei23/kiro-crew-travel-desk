@@ -1,2 +1,315 @@
-# kirocrew-travel-desk
-A 13-agent AI travel-planning crew as a KiroCrew app: one sentence in, a researched, risk-checked day-by-day trip out, kept in your own self-hosted trip planner.
+# Travel Desk
+
+Travel Desk is a KiroCrew app. A crew of 13 AI agents turns one sentence into a
+researched, debated and risk-checked day-by-day trip. The result is shown on a
+photo-rich trip page and map inside the dashboard, and stored in your own
+self-hosted trip planner ([TREK](https://github.com/liketrek/TREK)) so the data
+stays on your machine and remains editable outside this app.
+
+## How a trip is made
+
+You give the Tour Leader one sentence. From there:
+
+1. Request. The leader turns your sentence into a request the crew can work from.
+2. Planning. The Itinerary Planner runs four analysts in parallel (destination,
+   transport, lodging and food, intel), then chairs a two-round debate between a
+   see-more advocate and a slow-travel advocate, writes a verdict on the pace,
+   and produces a day-by-day itinerary with real coordinates.
+3. Risk review. Three officers (budget, safety, stamina) review the itinerary
+   and return PASS or REVISE. On REVISE the planner applies exactly one revision
+   round.
+4. Publish. The finished itinerary is pushed into your trip planner.
+5. Briefing. A pre-trip briefing produces the one-page checklist for the day
+   before departure.
+
+## Requirements
+
+- KiroCrew 0.8 or newer.
+- A trip planner. Either let the app run one for you with Docker, or point it at
+  a TREK instance you already run.
+- Python 3.10 or newer.
+- Optional: `npx`, used by the Airbnb research tool when available.
+
+## Install
+
+From the App Store once listed, or by hand:
+
+```
+git clone https://github.com/chenmingwei23/kirocrew-travel-desk
+kirocrew app install kirocrew-travel-desk
+kirocrew restart
+```
+
+`kirocrew app install` takes the local directory that contains `app.json`.
+
+## First run
+
+Open Travel Desk in the sidebar. The first time, a setup screen asks how you
+want a trip planner:
+
+- Run it for me. The app starts the trip planner in a Docker container bound to
+  loopback and keeps its state under the desk root.
+- I already run one. Give the app the address, admin email and password of your
+  existing TREK instance. The app tests the login before saving it.
+
+User data lives at the desk root, by default `<gateway home>/workspace/travel-desk`:
+trips, long-term memory, backups, and the container's own state when the app
+runs it. The trip planner login is written to `<desk root>/trek.env` with file
+mode 600 and is never returned by any route.
+
+## Usage
+
+Say one sentence to the Tour Leader: where, which dates, how many people,
+driving or transit. The crew researches, schedules and risk-checks it, and the
+trip and map appear on the page.
+
+Examples:
+
+- Oct 17–19, Great Ocean Road from Melbourne, 3 days by car, 2 people.
+- 10 月 17 到 19 日，墨尔本大洋路 3 天自驾，2 个人。
+
+The interface language switch is in Settings. It defaults to your browser
+language: a browser reporting a Chinese locale opens in 中文, otherwise English.
+The crew writes each trip in the language you asked in, so a request in English
+produces an English trip. Each language keeps its own conversation with the
+leader, and each language shows its own trips; switch the language to see the
+trips planned in the other one.
+
+## The team
+
+| Member | Role | What they do |
+|---|---|---|
+| Tour Leader | Lead | Runs the whole trip. Takes your one-sentence request, arranges the planning, the risk review and the pre-trip briefing, follows through to completion, writes the result into the itinerary and hands you a short report with the decisions that need you. |
+| Itinerary Planner | Managing | Turns the request into a day-by-day plan: runs four research tracks (destination, transport, lodging and food, intel), chairs the see-more vs slow-travel debate, sets the pace and produces the itinerary with real coordinates. |
+| Risk Review | Risk | Reviews the plan for budget, safety and stamina. Merges the three risk officers' findings into must-fix items and reminders, and rules pass or revise. |
+| Pre-trip Briefing | Briefing | A one-page checklist before departure: 24-hour to-dos, one line per day, weather and road conditions, booking checks, emergency contacts. Triggered by the leader or automatically the day before. |
+| Destination Analyst | Research | Finds what is worth seeing, with suggested time, tickets, opening hours and a one-line reason, grouped by area, and says what to skip. Every item cites a source. |
+| Transport Analyst | Research | Works out long-haul and local transport, drive-time tables, parking and fuel stops, with schedules and price sources. Road conditions per leg for self-drive trips. |
+| Lodging & Food Analyst | Research | Shortlists places to stay for each night and restaurants by area, with prices, reasons and sources, and flags what must be booked ahead. |
+| Intel Analyst | Research | Checks weather, holiday crowds, closures and roadworks, reputation highlights, and visa, ID and insurance requirements. Every item cites a source. |
+| See-More Advocate | Debate | Argues for a dense, see-it-all route with a day plan, and rebuts the slow side point by point so the planner hears that case in full. |
+| Slow-Travel Advocate | Debate | Argues for a relaxed, go-deep route with a day plan, and rebuts the see-more side point by point so the planner hears the other case. |
+| Budget Officer | Risk | Reviews the plan on cost: flags over-budget or poor-value choices and offers savings and alternatives. |
+| Safety Officer | Risk | Reviews the plan on safety: road, weather, activity and personal-safety risks, with the precautions and reminders to add. |
+| Stamina Officer | Risk | Reviews the plan on pace and fatigue: which day is overpacked, which drive or hike is too much, and a better loose-tight rhythm. |
+
+## Configuration
+
+Per-machine settings live in `data/config.json` (written by the app, never
+committed):
+
+| Key | Meaning |
+|---|---|
+| `deskRoot` | Where user data lives. Default `<gateway home>/workspace/travel-desk`. |
+| `trekUrl` | Address of the trip planner. Default `http://127.0.0.1:3000`. |
+| `trekContainer` | Name of the app-managed Docker container. Default `travel-desk-trek`. |
+| `trekImage` | Docker image for the app-managed planner. Default `mauriceboe/trek`. |
+| `trekManaged` | True when the app runs the planner itself in Docker. |
+
+Environment variables override the config: `TRAVEL_DESK_ROOT` (the desk root),
+`TREK_URL` (the planner address), `TREK_ENV` (the path to `trek.env`).
+
+## What runs in the background
+
+Nothing is scheduled. The app ships no crons. The backend makes network calls
+only while you are using it, and only to:
+
+- your own trip planner, for trips, places and the itinerary;
+- Wikipedia, for place photos;
+- Nominatim, for geocoding.
+
+All outbound calls carry a `travel-desk` User-Agent.
+
+## Development
+
+Run the tests and checks from the repository root:
+
+```
+python3 -m pytest tests -q      # with the kiro_crew package importable
+node --check ui/*.mjs           # parse-check the UI modules
+python3 scripts/build_agents.py --check   # agent specs match their prompt sources
+```
+
+There is a local dev harness that exercises the app without the live gateway:
+
+```
+python3 dev/harness.py
+```
+
+## Repository layout
+
+```
+app.json      the app manifest
+backend/      in-process HTTP routes (aiohttp), served under /api/apps/travel-desk
+engine/       standalone scripts the agents run (orchestrate, geocode, push_trip, trek_api, ...)
+agents/       the 13 agent specs, built by scripts/build_agents.py from agents/prompts/
+ui/           the ES-module React UI (createElement, no JSX, no bundler)
+desk/         charter, contract, roster (members.json), templates, example itinerary
+skills/       the travel-desk skill for the default assistant
+scripts/      install and uninstall accelerators, and the agent-spec build
+design/        the design brief and API notes
+dev/          the local dev harness
+tests/        the pytest suite
+```
+
+## Screenshots
+
+To be added: the coordinator will place screenshots under `design/evidence/`.
+
+## License
+
+This app is licensed under the MIT License; see `LICENSE`. The trip planner it
+uses, TREK, is licensed under AGPL-3.0 and is used unmodified over its REST API.
+
+---
+
+# 旅行团（Travel Desk）
+
+Travel Desk 是一个 KiroCrew app。一支 13 人的 AI 旅行团把你的一句话变成一份
+经过研究、辩论和风控的逐日行程。结果显示在 dashboard 里一个图片丰富的行程页和
+地图上，并存进你自己自托管的行程服务（[TREK](https://github.com/liketrek/TREK)），
+数据留在你自己的机器上，也能在这个 app 之外继续编辑。
+
+## 一趟行程是怎么做出来的
+
+你对团长说一句话，接下来：
+
+1. 需求。团长把你这句话整理成旅行团可以据此工作的需求。
+2. 规划。行程师并行跑四路分析师（目的地、交通、食宿、情报），主持多看派和
+   慢游派两轮辩论，就节奏写出裁决，产出一份带真实坐标的逐日行程。
+3. 风控评审。预算、安全、体力三位风控官评审行程，给出通过（PASS）或需要修改
+   （REVISE）。需要修改时，行程师只做一轮修订。
+4. 发布。完成的行程被推进你的行程服务。
+5. 简报。行前简报产出出发前一天的一页纸清单。
+
+## 环境要求
+
+- KiroCrew 0.8 或更新版本。
+- 一个行程服务。可以让 app 用 Docker 帮你运行一个，也可以指向你已经在运行的
+  TREK 实例。
+- Python 3.10 或更新版本。
+- 可选：`npx`，Airbnb 研究工具在可用时会用到。
+
+## 安装
+
+上架后从 App Store 安装，或手动安装：
+
+```
+git clone https://github.com/chenmingwei23/kirocrew-travel-desk
+kirocrew app install kirocrew-travel-desk
+kirocrew restart
+```
+
+`kirocrew app install` 接收包含 `app.json` 的本地目录。
+
+## 首次运行
+
+在侧边栏打开 Travel Desk。第一次会出现一个设置页，问你想怎么用行程服务：
+
+- 帮我运行。app 用 Docker 启动一个只绑定本机回环地址的行程服务容器，其状态
+  保存在 desk root 下。
+- 我已经在跑一个。把你现有 TREK 实例的地址、管理员邮箱和密码给 app，app 会
+  先测试登录再保存。
+
+用户数据放在 desk root，默认是 `<gateway home>/workspace/travel-desk`：行程、
+长期记忆、备份，以及 app 自己运行容器时容器的状态。行程服务的登录信息写在
+`<desk root>/trek.env`，文件权限 600，任何接口都不会返回它。
+
+## 使用
+
+对团长说一句话：去哪、几号到几号、几个人、自驾还是公交。旅行团会查资料、
+排日程、过风控，行程和地图就出现在这个页面上。
+
+例子：
+
+- 10 月 17 到 19 日，墨尔本大洋路 3 天自驾，2 个人。
+- Oct 17–19, Great Ocean Road from Melbourne, 3 days by car, 2 people.
+
+界面语言开关在设置里。它默认跟随你的浏览器语言：浏览器报告中文区域时打开中文，
+否则英文。旅行团按你提需求的语言写行程，所以用英文提需求，整趟就是英文。每种
+语言各有一段和团长的对话，各自显示各自的行程；切换语言就能看到用另一种语言
+规划的行程。
+
+## 团队
+
+| 成员 | 分工 | 职责 |
+|---|---|---|
+| 团长 | 指挥 | 统筹整趟行程。接到一句话需求后安排行程规划、风控评审和行前简报，跟进到全部完成，把结果写进行程里并汇总成一份简明汇报，附需要你拍板的事项。 |
+| 行程师 | 管理 | 把需求做成一份逐日行程。组织目的地、交通、食宿、情报四路研究，主持多看与慢游两派辩论，裁定节奏，产出带真实坐标的逐日行程。 |
+| 风控汇总 | 风控 | 审这趟行程的预算、安全和体力风险。汇总三位风控官的意见，去重合并出必改项和便签提醒，给出通过或需要修改的结论。 |
+| 行前简报 | 简报 | 出发前给一页纸清单：24 小时待办、逐日一句话、天气路况、预订核对、紧急联络。可由团长手动触发，也会在出发前一天自动生成。 |
+| 目的地分析师 | 分析 | 查目的地值得去的景点，给出建议时长、门票、开放时间和一句话理由，按区域分组，并说明哪些不推荐。每条都附来源。 |
+| 交通分析师 | 分析 | 查大交通和当地交通方案，整理车程表、停车与加油点，给出时刻与价格来源。自驾行程标清每段路况。 |
+| 食宿分析师 | 分析 | 按每晚位置查住宿候选，按区域查餐厅候选，给出价格、理由和来源，并列出需要提前预订的项。 |
+| 情报分析师 | 分析 | 查天气、节假日人流、临时关闭施工预警、口碑要点，以及签证证件保险要求，每条都附来源。 |
+| 多看派 | 辩论 | 主张紧凑多看的路线，给出逐日方案，并逐条反驳慢游派，让行程师在取舍时听到充分的一方。 |
+| 慢游派 | 辩论 | 主张慢下来深度玩的路线，给出逐日方案，并逐条反驳多看派，让行程师在取舍时听到另一方。 |
+| 预算官 | 风控 | 从花费角度审行程，指出超预算或不划算的安排，给出可以省的地方和替代方案。 |
+| 安全官 | 风控 | 从安全角度审行程，指出路况、天气、体验项目和治安上的风险点，给出必要的防护和便签提醒。 |
+| 体力官 | 风控 | 从体力和节奏角度审行程，指出哪天排得太满、哪段车程或徒步吃不消，给出更合理的松紧安排。 |
+
+## 配置
+
+每台机器自己的设置放在 `data/config.json`（由 app 写入，不入库）：
+
+| 键 | 含义 |
+|---|---|
+| `deskRoot` | 用户数据所在目录。默认 `<gateway home>/workspace/travel-desk`。 |
+| `trekUrl` | 行程服务地址。默认 `http://127.0.0.1:3000`。 |
+| `trekContainer` | app 管理的 Docker 容器名。默认 `travel-desk-trek`。 |
+| `trekImage` | app 管理的行程服务所用镜像。默认 `mauriceboe/trek`。 |
+| `trekManaged` | app 自己用 Docker 运行行程服务时为 true。 |
+
+环境变量会覆盖配置：`TRAVEL_DESK_ROOT`（desk root）、`TREK_URL`（行程服务地址）、
+`TREK_ENV`（`trek.env` 的路径）。
+
+## 后台会跑什么
+
+没有任何定时任务。app 不带 cron。后端只在你使用时发起网络请求，且只访问：
+
+- 你自己的行程服务，取行程、地点和逐日安排；
+- 维基百科，取地点照片；
+- Nominatim，做地理编码。
+
+所有对外请求都带 `travel-desk` 的 User-Agent。
+
+## 开发
+
+在仓库根目录运行测试和检查：
+
+```
+python3 -m pytest tests -q      # 需要能 import kiro_crew 包
+node --check ui/*.mjs           # 校验 UI 模块能被解析
+python3 scripts/build_agents.py --check   # 校验 agent 规格与 prompt 源一致
+```
+
+还有一个本地开发脚手架，不用启动真实网关就能跑通 app：
+
+```
+python3 dev/harness.py
+```
+
+## 仓库结构
+
+```
+app.json      app 清单
+backend/      进程内 HTTP 路由（aiohttp），挂在 /api/apps/travel-desk 下
+engine/       agent 运行的独立脚本（orchestrate、geocode、push_trip、trek_api 等）
+agents/       13 个 agent 规格，由 scripts/build_agents.py 从 agents/prompts/ 生成
+ui/           ES module 版 React UI（createElement，无 JSX，无打包器）
+desk/         章程、契约、花名册（members.json）、模板、示例行程
+skills/       给默认助手用的 travel-desk 技能
+scripts/      安装/卸载加速脚本，以及 agent 规格构建脚本
+design/       设计简报和 API 说明
+dev/          本地开发脚手架
+tests/        pytest 测试
+```
+
+## 截图
+
+待补：协调者会把截图放在 `design/evidence/` 下。
+
+## 许可
+
+本 app 采用 MIT 许可，见 `LICENSE`。它使用的行程服务 TREK 采用 AGPL-3.0 许可，
+通过其 REST API 原样使用，未做修改。

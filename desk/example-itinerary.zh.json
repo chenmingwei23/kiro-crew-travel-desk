@@ -1,0 +1,142 @@
+{
+  "title": "10月长周末 · 悉尼→蓝山→猎人谷 4 天自驾",
+  "description": "2 人自驾，4 天 3 晚，悉尼→蓝山（Katoomba）→Bells Line of Road→Putty Road→猎人谷（Pokolbin）→纽卡斯尔→悉尼，全程约 640km。10 月 3 日周六出发，10 月 5 日是 NSW Labour Day 公共假期。",
+  "start_date": "2026-10-03",
+  "end_date": "2026-10-06",
+  "currency": "AUD",
+  "transport_mode": "driving",
+  "days": [
+    {
+      "date": "2026-10-03",
+      "notes": "悉尼→蓝山，车程约 1h40。周六早走避开 M4 车流。今天全部在悬崖边观景台之间移动，穿防风外套，山上比悉尼低 5–8°C。",
+      "cards": [
+        {"text": "8:00 悉尼出发，M4 → Great Western Hwy；Leura 前加满油", "time": "08:00", "icon": "🚗"}
+      ],
+      "places": [
+        {"name": "温特沃斯瀑布观景台 Wentworth Falls Lookout", "lat": -33.72608, "lng": 150.37202,
+         "address": "Wentworth Falls Track, Wentworth Falls NSW 2782",
+         "time": "10:00", "end_time": "11:30", "duration_minutes": 90,
+         "notes": "停 Wentworth Falls Picnic Area（免费）。走 Princes Rock 环线 30 分钟看瀑布全景；体力好走到 Fletchers Lookout 再回来。"},
+        {"name": "卢拉小镇 Leura Mall", "lat": -33.70846, "lng": 150.33196,
+         "address": "Leura Mall, Leura NSW 2780",
+         "time": "12:00", "end_time": "13:30", "duration_minutes": 90,
+         "notes": "午饭：Leura Garage（老修车厂改的餐厅）或 Bakehouse on Wentworth 的肉派。主街逛 Josophan's 巧克力、Megalong Books。路边停车 2h。"},
+        {"name": "三姐妹峰 · 回声角 Echo Point", "lat": -33.73136, "lng": 150.31184,
+         "address": "Echo Point Rd, Katoomba NSW 2780",
+         "time": "14:00", "end_time": "15:00", "duration_minutes": 60,
+         "notes": "蓝山标志。Echo Point 停车场收费约 $4.4/h。走 Giant Stairway 头几段到 Honeymoon Bridge，站上三姐妹第一峰，往返 20 分钟。"},
+        {"name": "景观世界 Scenic World", "lat": -33.72895, "lng": 150.30126,
+         "address": "Violet St & Cliff Dr, Katoomba NSW 2780", "price": 59,
+         "time": "15:15", "end_time": "17:00", "duration_minutes": 105,
+         "notes": "世界最陡的观光铁路 Scenic Railway（52°）+ 缆车 + 谷底雨林步道 1 小时。Unlimited Discovery Pass 约 $59/人，网上买免排队。17:00 关门，别晚到。"},
+        {"name": "卡希尔斯观景台 Cahills Lookout", "lat": -33.72078, "lng": 150.28404,
+         "address": "Cliff Dr, Katoomba NSW 2780",
+         "time": "17:30", "end_time": "18:15", "duration_minutes": 45,
+         "notes": "看 Megalong Valley 日落，比 Echo Point 人少得多，路边免费停车。10 月初日落约 18:10。"}
+      ]
+    },
+    {
+      "date": "2026-10-04",
+      "notes": "蓝山北线→Bells Line of Road→Putty Road→猎人谷。今天开车约 4.5h、260km。Blackheath 加满油：Bilpin 之后到 Singleton 之间只有 Grey Gum 一个补给点，Putty Road 大段没手机信号。",
+      "cards": [
+        {"text": "8:00 退房，去 Blackheath 加油", "time": "08:00", "icon": "⛽"},
+        {"text": "Putty Road 160km 弯路多，摩托车多，限速 100 常见 80；天黑前（18:00）要走完", "time": "15:00", "icon": "⚠️"}
+      ],
+      "places": [
+        {"name": "戈维茨峭壁观景台 Govetts Leap", "lat": -33.62793, "lng": 150.31152,
+         "address": "Govetts Leap Rd, Blackheath NSW 2785",
+         "time": "08:30", "end_time": "09:15", "duration_minutes": 45,
+         "notes": "Grose Valley 全景 + Bridal Veil 瀑布，早晨顺光最好看。旁边有 NPWS 游客中心可以拿步道地图。"},
+        {"name": "埃文斯观景台 · 大峡谷步道 Evans Lookout", "lat": -33.64654, "lng": 150.32469,
+         "address": "Evans Lookout Rd, Blackheath NSW 2785",
+         "time": "09:30", "end_time": "12:00", "duration_minutes": 150,
+         "notes": "Grand Canyon Track 环线 6.3km 约 2.5h，走溪谷雨林和砂岩峡谷，是蓝山最好的一条步道，穿抓地的鞋。只想看景：在 Evans Lookout 停 15 分钟就走。"},
+        {"name": "蓝山植物园 Mount Tomah Botanic Garden", "lat": -33.53865, "lng": 150.42203,
+         "address": "Bells Line of Rd, Mount Tomah NSW 2758",
+         "time": "12:45", "end_time": "14:00", "duration_minutes": 75,
+         "notes": "免费入园，海拔 1000m 的冷温带植物园，10 月正是杜鹃和郁金香季。园内 Potager Restaurant 午饭，露台看 Grose Valley。"},
+        {"name": "Bilpin 苹果派 Bilpin Fruit Bowl", "lat": -33.50963, "lng": 150.55906,
+         "address": "2093 Bells Line of Rd, Bilpin NSW 2758",
+         "time": "14:15", "end_time": "14:45", "duration_minutes": 30,
+         "notes": "Bilpin 是悉尼的苹果镇，买两个热苹果派路上吃。隔壁 Bilpin Cider Co 可以试 cider——司机只闻不喝。"},
+        {"name": "Grey Gum 咖啡 · Putty Road 中点", "lat": -33.03045, "lng": 150.67347,
+         "address": "8679 Putty Rd, Putty NSW 2330",
+         "time": "16:15", "end_time": "16:45", "duration_minutes": 30,
+         "notes": "Putty Road 上唯一的补给点，摩托车手的圣地。上厕所、喝咖啡、伸腿。从这里到 Pokolbin 还有约 1h20。"}
+      ]
+    },
+    {
+      "date": "2026-10-05",
+      "notes": "猎人谷酒庄日（今天是 NSW Labour Day 公共假期，酒庄都开）。Pokolbin 各酒庄之间 5–10 分钟车程，全天不到 60km。",
+      "cards": [
+        {"text": "自驾品酒规则：司机全天不喝或每站只闻+吐酒桶，NSW 限 0.05。不想开车就订 Hunter Valley Wine Tasting Tours 半日小巴（约 $140/人，酒店接）", "time": "09:00", "icon": "🍷"},
+        {"text": "想坐热气球就今晚订 Balloon Aloft 明早日出场（约 $299/人，5:15 集合 Peterson House）", "time": "17:30", "icon": "🎈"}
+      ],
+      "places": [
+        {"name": "奥德丽·威尔金森酒庄 Audrey Wilkinson", "lat": -32.79204, "lng": 151.27447,
+         "address": "750 De Beyers Rd, Pokolbin NSW 2320", "price": 15,
+         "time": "10:00", "end_time": "11:00", "duration_minutes": 60,
+         "notes": "猎人谷最好的山景酒庄，1866 年老藤。品酒约 $15/人，招牌 Semillon 和 Shiraz。露台咖啡先坐 15 分钟看葡萄园。"},
+        {"name": "泰瑞尔酒庄 Tyrrell's Wines", "lat": -32.77291, "lng": 151.27292,
+         "address": "1838 Broke Rd, Pokolbin NSW 2320",
+         "time": "11:15", "end_time": "12:15", "duration_minutes": 60,
+         "notes": "1858 年，猎人谷最老的家族酒庄。Vat 1 Semillon 是猎人谷的名片。10:30 有酒窖导览（约 45 分钟，免费）。"},
+        {"name": "布洛肯伍德酒庄 Brokenwood Wines", "lat": -32.77572, "lng": 151.30019,
+         "address": "401-427 McDonalds Rd, Pokolbin NSW 2320",
+         "time": "12:30", "end_time": "13:15", "duration_minutes": 45,
+         "notes": "Graveyard Vineyard Shiraz 是澳洲名酒。新酒窖建筑很好看，对面就是 Smelly Cheese Shop 可以买芝士。"},
+        {"name": "Bistro Molines 午餐", "lat": -32.84876, "lng": 151.29380,
+         "address": "749 Mount View Rd, Mount View NSW 2325",
+         "time": "13:30", "end_time": "15:00", "duration_minutes": 90,
+         "notes": "Mount View 山上的法餐，葡萄园景观，猎人谷口碑第一。周一中午营业，必须提前订位。人均 $80–100。"},
+        {"name": "猎人谷花园 · 芝士巧克力 Hunter Valley Gardens", "lat": -32.77526, "lng": 151.29469,
+         "address": "2090 Broke Rd, Pokolbin NSW 2320", "price": 38,
+         "time": "15:30", "end_time": "17:00", "duration_minutes": 90,
+         "notes": "花园门票 $38/人（可选，10 月春花正好）。旁边 Roche Estate 村：Hunter Valley Chocolate Company、Smelly Cheese Shop 买伴手礼，17:00 关门。"}
+      ]
+    },
+    {
+      "date": "2026-10-06",
+      "notes": "猎人谷→纽卡斯尔→悉尼。Hunter Expressway M15 → M1 到纽卡斯尔约 55 分钟，纽卡斯尔回悉尼约 2h。",
+      "cards": [
+        {"text": "可选：热气球日出场，5:15 Peterson House 集合，飞 1h + 香槟早餐，9:00 结束", "time": "05:15", "icon": "🎈"},
+        {"text": "11:00 前退房，M15 → M1 → Newcastle", "time": "10:30", "icon": "🧳"},
+        {"text": "回到悉尼，全程约 640km", "time": "19:00", "icon": "🏁"}
+      ],
+      "places": [
+        {"name": "诺比斯海滩 · 灯塔 Nobbys Beach", "lat": -32.92155, "lng": 151.79529,
+         "address": "Nobbys Rd, Newcastle NSW 2300",
+         "time": "11:30", "end_time": "12:30", "duration_minutes": 60,
+         "notes": "沿防波堤走到 Nobbys Head 灯塔 20 分钟，看运煤船进港。免费停车在 Nobbys Beach 停车场。", "transport_mode": "walking"},
+        {"name": "纽卡斯尔海水浴场 Newcastle Ocean Baths", "lat": -32.92957, "lng": 151.79095,
+         "address": "30 Shortland Esplanade, Newcastle East NSW 2300",
+         "time": "12:30", "end_time": "13:00", "duration_minutes": 30,
+         "notes": "1922 年 Art Deco 海水泳池，刚翻新完。想游泳带泳衣，10 月水温约 19°C。从 Nobbys 走 Bathers Way 过来 10 分钟。"},
+        {"name": "Darby Street 午餐", "lat": -32.93259, "lng": 151.77065,
+         "address": "Darby St, Cooks Hill NSW 2300",
+         "time": "13:15", "end_time": "14:30", "duration_minutes": 75,
+         "notes": "纽卡斯尔的咖啡街。Goldbergs Coffee House 或 One Penny Black。路边停车 2h 免费。"},
+        {"name": "梅里韦瑟海水浴场 Merewether Ocean Baths", "lat": -32.95149, "lng": 151.75548,
+         "address": "Scenic Dr, Merewether NSW 2291",
+         "time": "14:45", "end_time": "15:30", "duration_minutes": 45,
+         "notes": "南半球最大的海水泳池，Surfest 冲浪赛场地。旁边 Merewether Surfhouse 楼上咖啡看海。"},
+        {"name": "布鲁克林 · 霍克斯伯里河 Brooklyn", "lat": -33.54708, "lng": 151.22631,
+         "address": "Dangar Rd, Brooklyn NSW 2083",
+         "time": "16:45", "end_time": "17:45", "duration_minutes": 60,
+         "notes": "M1 下来 5 分钟，河边 Lifeboat Seafood 炸鱼薯条看日落，收尾。回悉尼市区再 50 分钟。"}
+      ]
+    }
+  ],
+  "stays": [
+    {"name": "The Carrington Hotel · Katoomba", "lat": -33.71305, "lng": 150.31081,
+     "address": "15-47 Katoomba St, Katoomba NSW 2780",
+     "from_date": "2026-10-03", "to_date": "2026-10-04", "check_in": "15:00", "check_out": "10:00",
+     "notes": "1883 年的老酒店，Katoomba 火车站对面，Echo Point 开车 5 分钟。",
+     "stay_notes": "晚餐：酒店 Champagne Charlie's，或街对面 Station Bar 的柴火披萨。含早餐。"},
+    {"name": "Spicers Vineyards Estate · Pokolbin", "lat": -32.69673, "lng": 151.26241,
+     "address": "555 Hermitage Rd, Pokolbin NSW 2320",
+     "from_date": "2026-10-04", "to_date": "2026-10-06", "check_in": "15:00", "check_out": "11:00",
+     "notes": "葡萄园里的精品酒店，12 间房，含早餐。到 Pokolbin 酒庄区 10 分钟。",
+     "stay_notes": "两晚。第一晚晚餐在酒店 Restaurant Botanica（要订）；第二晚可以去 Pokolbin 的 EXP. Restaurant。"}
+  ]
+}

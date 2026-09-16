@@ -1,0 +1,21 @@
+# Install artifacts written by the gateway — never committed.
+/build
+/release-info
+.app_secret
+app-crons.json
+installed.json
+
+# Per-machine runtime config (resolved paths, install-time version).
+data/
+
+# Python + tooling caches.
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node + browser tooling.
+node_modules/
+.playwright/
+
+# Local dev harness output.
+dev/out/
