@@ -1,0 +1,112 @@
+{
+  "title": "Great Ocean Road · 3-Day Melbourne Loop (Twelve Apostles at Sunset)",
+  "description": "2 people, 3 days / 2 nights by car. Melbourne → Great Ocean Road B100 (Torquay / Lorne / Apollo Bay) → Twelve Apostles / Port Campbell → inland A1 back, about 570 km in total. Leave Sat Oct 17, return the car Mon Oct 19 in the evening. Victorian school holidays ended Oct 4 and there is no public holiday, so it is shoulder season. The most photogenic stop, the Twelve Apostles, is saved for the Day 2 sunset.",
+  "start_date": "2026-10-17",
+  "end_date": "2026-10-19",
+  "currency": "AUD",
+  "transport_mode": "driving",
+  "days": [
+    {
+      "date": "2026-10-17",
+      "notes": "Melbourne → Apollo Bay. About 115 km on the coastal B100 with a full day of stops. It is windy on the coast and cool in the morning and evening (about 8–20°C): bring a windproof layer and sunscreen. Today covers the eastern surf coast and a lighthouse, ends with koalas at dusk, and reaches Apollo Bay before sunset.",
+      "cards": [
+        {"text": "09:30 pick up the car in downtown Melbourne; M1 → Surf Coast Hwy; fill the tank in Torquay", "time": "09:30", "icon": "⛽"},
+        {"text": "The B100 is winding and mostly limited to 80 km/h; kangaroos and koalas can be on the road at dusk — watch the verges", "time": "15:30", "icon": "⚠️"},
+        {"text": "Sunset about 19:35. Check in at Apollo Bay before 17:00, then a harbour walk and a seafood dinner", "time": "17:00", "icon": "🌅"}
+      ],
+      "places": [
+        {"name": "Bells Beach", "lat": -38.37671, "lng": 144.25195,
+         "address": "Bells Beach Rd, Bells Beach VIC 3228",
+         "time": "11:00", "end_time": "11:30", "duration_minutes": 30,
+         "notes": "World-famous surf beach and home of the Easter Rip Curl Pro. 15–20 minutes at the lookout is enough; it is only a 5-minute detour from Torquay. Free parking. Fill up in Torquay before you leave."},
+        {"name": "Split Point Lighthouse", "lat": -38.46800, "lng": 144.10447,
+         "address": "Federal St, Aireys Inlet VIC 3231",
+         "time": "12:00", "end_time": "12:45", "duration_minutes": 45,
+         "notes": "The red-capped 'White Queen' with clifftop lookouts over the sea. The grounds are free; the guided tower tour is ticketed (price unverified). Aireys Inlet has cafés for a quick coffee first."},
+        {"name": "Memorial Arch (Eastern View)", "lat": -38.47204, "lng": 144.04458,
+         "address": "Great Ocean Rd, Eastern View VIC 3231",
+         "time": "13:00", "end_time": "13:15", "duration_minutes": 15,
+         "notes": "The wooden arch that marks the Great Ocean Road, built by returned WWI servicemen. A 10–15 minute roadside photo stop with a small car park."},
+        {"name": "Lorne (lunch)", "lat": -38.54117, "lng": 143.97482,
+         "address": "Mountjoy Parade, Lorne VIC 3232",
+         "time": "13:45", "end_time": "15:10", "duration_minutes": 85,
+         "notes": "Seaside resort town and today's lunch anchor: cafés, seafood and burgers (Bottle of Milk) along the main street. With time to spare, choose one: Erskine Falls in the hills behind town (-38.50671, 143.91323; about 40 minutes round trip, the lookout is 10 steps from the car park) or Teddy's Lookout over the river mouth. Timed street parking."},
+        {"name": "Kennett River Koala Walk", "lat": -38.66770, "lng": 143.85892,
+         "address": "Grey River Rd, Kennett River VIC 3234",
+         "time": "15:50", "end_time": "16:35", "duration_minutes": 45,
+         "notes": "One of the most reliable places in Australia to see wild koalas. Drive or walk up Grey River Rd and look up into the forks of the gum trees; wild parrots too. Most active at dusk, and it is on the way into Apollo Bay. Free."}
+      ]
+    },
+    {
+      "date": "2026-10-18",
+      "notes": "Apollo Bay → Port Campbell. Only about 90 km but the most stops — this is the coast's hero day. Rainforest and an optional lighthouse in the morning, Gibson Steps and Loch Ard Gorge in the afternoon, and the Twelve Apostles saved for the sunset finale. Skip Cape Otway if you are running late.",
+      "cards": [
+        {"text": "Fill the tank before leaving Apollo Bay — fuel is scarce through the Otways to Port Campbell (Lavers Hill has a station)", "time": "09:00", "icon": "⛽"},
+        {"text": "Phone signal is weak in the Otways: download offline maps first", "time": "09:15", "icon": "📵"},
+        {"text": "Lunch and a break around Lavers Hill (Apollo Bay → Lavers Hill 48 km / 36 min)", "time": "12:45", "icon": "🍽️"},
+        {"text": "Sunset at the Twelve Apostles about 19:45 (AEDT); afterwards it is a flat 12-minute drive to Port Campbell — the only night driving of the trip", "time": "19:00", "icon": "🌇"}
+      ],
+      "places": [
+        {"name": "Maits Rest Rainforest Walk", "lat": -38.75426, "lng": 143.55662,
+         "address": "Great Ocean Rd, Great Otway National Park VIC 3233",
+         "time": "09:30", "end_time": "10:00", "duration_minutes": 30,
+         "notes": "The easiest temperate-rainforest loop on the Great Ocean Road (about 800 m / 30 min): giant ferns and ancient trees. Free, roadside car park. Wear walking shoes."},
+        {"name": "Cape Otway Lightstation (optional)", "lat": -38.85678, "lng": 143.51182,
+         "address": "Otway Lighthouse Rd, Cape Otway VIC 3233",
+         "time": "10:40", "end_time": "12:00", "duration_minutes": 80,
+         "notes": "The oldest surviving lighthouse on mainland Australia (1848), with a telegraph station, WWII radar bunker, whale exhibit and café. ⚠️ Optional: Lighthouse Rd is a 12 km spur each way (about 1.5 h with the visit), ticketed (price unverified, see lightstation.com), roughly 9:30–16:30. Short on time? Skip it and head straight for the Twelve Apostles."},
+        {"name": "Gibson Steps", "lat": -38.66863, "lng": 143.11210,
+         "address": "Great Ocean Rd, Princetown VIC 3269",
+         "time": "14:20", "end_time": "15:05", "duration_minutes": 45,
+         "notes": "86 steps down to the beach to look UP at the Gog and Magog sea stacks — more dramatic than any lookout. Free. Beach access depends on tide and swell; the steps close in heavy seas, so follow the signs and never go down when closed."},
+        {"name": "Loch Ard Gorge", "lat": -38.64641, "lng": 143.07033,
+         "address": "Great Ocean Rd, Port Campbell VIC 3269",
+         "time": "15:25", "end_time": "16:45", "duration_minutes": 80,
+         "notes": "Site of the famous 1878 shipwreck, with several short walks to the gorge, arches and sea stacks. The beach stairs may be closed for unstable cliffs; the lookouts stay open. Free parking."},
+        {"name": "Twelve Apostles", "lat": -38.66028, "lng": 143.09336,
+         "address": "Great Ocean Rd, Princetown VIC 3269",
+         "time": "17:00", "end_time": "19:40", "duration_minutes": 160,
+         "notes": "The headline of the trip: seven limestone sea stacks. Parks Victoria says they glow red-gold at sunset — allow the whole golden hour (from about 18:45) through sunset at about 19:45. Large free car park; a tunnel leads to the lookouts. ⚠️ Check the official site before you go: a new visitor centre may open in late 2026 and bring bookings and entry fees."}
+      ]
+    },
+    {
+      "date": "2026-10-19",
+      "notes": "Port Campbell → Melbourne via the inland A1. Three coastal formations close to town in the morning (The Arch, London Arch, The Grotto), then the inland road home — about an hour faster than retracing the coast and no second run through the hills — returning the car downtown in the evening.",
+      "cards": [
+        {"text": "Breakfast by the sea in Port Campbell; fill the tank before leaving", "time": "08:30", "icon": "⛽"},
+        {"text": "After The Grotto turn inland onto the A1; keep a 3-hour buffer", "time": "10:35", "icon": "🧭"},
+        {"text": "Downtown Melbourne about 15:30, return the car in the evening; the loop is about 570 km in total", "time": "15:30", "icon": "🏁"}
+      ],
+      "places": [
+        {"name": "The Arch", "lat": -38.62359, "lng": 142.94418,
+         "address": "Great Ocean Rd, Port Campbell VIC 3269",
+         "time": "09:15", "end_time": "09:35", "duration_minutes": 20,
+         "notes": "The first sea arch west of Port Campbell, with two viewing platforms. Free, a quick photo stop."},
+        {"name": "London Arch", "lat": -38.62409, "lng": 142.93041,
+         "address": "Great Ocean Rd, Peterborough VIC 3270",
+         "time": "09:40", "end_time": "10:05", "duration_minutes": 25,
+         "notes": "Formerly 'London Bridge': the outer span collapsed in 1990 and left an island — two visitors were stranded and lifted off by helicopter. Free lookout."},
+        {"name": "The Grotto", "lat": -38.61659, "lng": 142.91611,
+         "address": "Great Ocean Rd, Peterborough VIC 3270",
+         "time": "10:10", "end_time": "10:35", "duration_minutes": 25,
+         "notes": "Half cave, half rock pool, with steps down to a lookout at the water. Free. Turn around here and head inland for the drive home."},
+        {"name": "Colac (lunch and a stretch)", "lat": -38.33998, "lng": 143.58585,
+         "address": "Murray St, Colac VIC 3250",
+         "time": "12:00", "end_time": "13:00", "duration_minutes": 60,
+         "notes": "Midpoint of the inland run home: lunch and a break. Port Campbell → Colac about 95 km / 74 min; then the A1 to Melbourne about 150 km / 1 h 48."}
+      ]
+    }
+  ],
+  "stays": [
+    {"name": "Captains at the Bay · Apollo Bay", "lat": -38.75663, "lng": 143.66671,
+     "address": "21 Pascoe St, Apollo Bay VIC 3233",
+     "from_date": "2026-10-17", "to_date": "2026-10-18", "check_in": "15:00", "check_out": "10:00",
+     "notes": "Boutique B&B a short walk from the beach and the main-street restaurants, breakfast included; about AUD 200–280 a night (unverified).",
+     "stay_notes": "Dinner: La Bimba (seafood, book ahead). The Apollo Bay Fisherman's Co-op may be under reconstruction — check it is open before you go."},
+    {"name": "Sea Foam Villas · Port Campbell", "lat": -38.62072, "lng": 142.99388,
+     "address": "14 Lord St, Port Campbell VIC 3269",
+     "from_date": "2026-10-18", "to_date": "2026-10-19", "check_in": "15:00", "check_out": "10:00",
+     "notes": "Ocean-view villas, a short walk to town and the beach, 12 minutes from the Twelve Apostles; about AUD 230–320 a night (unverified).",
+     "stay_notes": "Dinner at 12 Rocks Beach Bar Cafe (sea views); breakfast next morning at Forage on the Foreshore."}
+  ]
+}

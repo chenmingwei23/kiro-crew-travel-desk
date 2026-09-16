@@ -1,0 +1,66 @@
+{
+  "name": "travel-desk",
+  "displayName": "Travel Desk",
+  "version": "1.0.0",
+  "description": "A crew of 13 AI agents turns one sentence into a researched, debated, risk-checked day-by-day trip, shown on a photo-rich trip page and map and stored in your own self-hosted TREK trip planner.",
+  "author": "chenmingwei23",
+  "license": "MIT",
+  "minKiroCrewVersion": "0.8.0",
+  "tags": [
+    "travel",
+    "trip-planning",
+    "itinerary",
+    "agents",
+    "map"
+  ],
+  "agents": [
+    "agents/trip-tour-leader.json",
+    "agents/trip-itinerary-planner.json",
+    "agents/trip-risk-pod.json",
+    "agents/trip-briefing.json",
+    "agents/trip-destination-analyst.json",
+    "agents/trip-transport-analyst.json",
+    "agents/trip-lodging-food-analyst.json",
+    "agents/trip-intel-analyst.json",
+    "agents/trip-advocate-packed.json",
+    "agents/trip-advocate-slow.json",
+    "agents/trip-risk-budget.json",
+    "agents/trip-risk-safety.json",
+    "agents/trip-risk-stamina.json"
+  ],
+  "skills": [
+    "skills/travel-desk"
+  ],
+  "permissions": {
+    "api": [
+      "/api/chat",
+      "/api/chat/*",
+      "/api/approvals",
+      "/api/approvals/*",
+      "/api/file-read",
+      "/api/apps/travel-desk/*"
+    ],
+    "cron": false,
+    "network": true,
+    "storage": false
+  },
+  "backend": {
+    "hooks": {
+      "routes": "backend.routes:register_routes"
+    }
+  },
+  "ui": {
+    "entry": "index.mjs",
+    "pages": [
+      {
+        "route": "/travel-desk",
+        "label": "Travel Desk",
+        "iconUrl": "icon.svg"
+      }
+    ]
+  },
+  "setup": {
+    "onInstall": "scripts/install.sh",
+    "onUninstall": "scripts/uninstall.sh"
+  }
+}
