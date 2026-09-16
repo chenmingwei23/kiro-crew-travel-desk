@@ -142,11 +142,35 @@ def default_slug(root: Path) -> str | None:
     return best[1] if best else None
 
 
-def infer_states(events: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
+#: A "working" state older than this without a newer event reads as idle: a leaf
+#: that wrote its file but never logged its final event must not look busy forever.
+STALE_WORKING_SECS = 30 * 60
+
+
+def _event_age(ev: dict[str, Any], now: float) -> float | None:
+    raw = ev.get("at")
+    if not isinstance(raw, str) or not raw:
+        return None
+    try:
+        from datetime import datetime, timezone
+
+        stamp = datetime.fromisoformat(raw)
+        if stamp.tzinfo is None:
+            stamp = stamp.astimezone()
+        return now - stamp.astimezone(timezone.utc).timestamp()
+    except ValueError:
+        return None
+
+
+def infer_states(events: list[dict[str, Any]], now: float | None = None) -> dict[str, dict[str, str]]:
     """Per member-id, ``{"state", "state_msg"}`` from its LAST event (§8.2).
 
-    ``dispatched|stage`` -> working, ``failed`` -> blocked, anything else -> idle.
+    ``dispatched|stage`` -> working (unless older than ``STALE_WORKING_SECS``),
+    ``failed`` -> blocked, anything else -> idle.
     """
+    import time
+
+    now = time.time() if now is None else now
     last: dict[str, dict[str, Any]] = {}
     for ev in events:
         who = ev.get("who")
@@ -156,7 +180,8 @@ def infer_states(events: list[dict[str, Any]]) -> dict[str, dict[str, str]]:
     for who, ev in last.items():
         kind = str(ev.get("kind") or "")
         if kind in WORKING_KINDS:
-            state = "working"
+            age = _event_age(ev, now)
+            state = "idle" if age is not None and age > STALE_WORKING_SECS else "working"
         elif kind in BLOCKED_KINDS:
             state = "blocked"
         else:

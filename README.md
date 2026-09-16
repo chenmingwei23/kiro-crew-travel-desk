@@ -185,7 +185,21 @@ tests/        the pytest suite
 
 ## Screenshots
 
-To be added: the coordinator will place screenshots under `design/evidence/`.
+Taken from a fresh install in an isolated KiroCrew gateway with its own
+Docker-run trip planner; the Canberra trip was produced by the crew from one
+sentence.
+
+| | |
+|---|---|
+| ![First-run setup](design/evidence/setup-en.png) | ![Trip page](design/evidence/trip-page-en.png) |
+| First-run setup: run the trip planner in Docker, or connect an existing one | The trip page: hero, facts, one block per day, the Tour Leader alongside |
+| ![Day block and the leader's report](design/evidence/trip-day-and-leader-en.png) | ![Map view](design/evidence/map-all-en.png) |
+| The crew's finished Canberra weekend with the leader's report in the chat | Full map view: numbered stops, overnight stays, photo cards per day |
+| ![Team](design/evidence/team-en.png) | ![Settings](design/evidence/settings-en.png) |
+| The 13-member crew and what each one does | Settings: language, the trip planner connection, advanced controls |
+
+The same pages in 中文: [trip page](design/evidence/trip-page-zh.png),
+[map](design/evidence/map-all-zh.png), [setup](design/evidence/setup-zh.png).
 
 ## License
 
@@ -363,7 +377,15 @@ tests/        pytest 测试
 
 ## 截图
 
-待补：协调者会把截图放在 `design/evidence/` 下。
+截自一个隔离的 KiroCrew 网关里的全新安装，行程服务由 app 自己用 Docker 启动；堪培拉那趟
+行程是团队根据一句话做出来的。
+
+| | |
+|---|---|
+| ![首次设置](design/evidence/setup-zh.png) | ![行程页](design/evidence/trip-page-zh.png) |
+| 首次设置：用 Docker 启动行程服务，或连接已有的一个 | 行程页：大图、要点、按天分块，团长在右侧 |
+| ![地图](design/evidence/map-all-zh.png) | ![团长的汇报](design/evidence/trip-day-and-leader-en.png) |
+| 整页地图：编号停留点、住宿、每天的照片卡 | 团队做完堪培拉周末后，团长在聊天里的汇报（英文请求，英文行程） |
 
 ## 许可
 
