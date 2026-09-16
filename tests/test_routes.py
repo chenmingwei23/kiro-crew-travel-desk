@@ -331,6 +331,17 @@ def test_org_state_inferred_from_events(app_ctx, desk_root, make_trip, monkeypat
     assert got["leader"]["state"] == "idle"
 
 
+def test_stale_working_event_reads_idle():
+    from backend import deskdata
+
+    fresh = {"who": "lodging", "kind": "stage", "msg": "checking", "at": "2026-09-16T17:00:00+00:00"}
+    now = 1789578000.0  # 2026-09-16T17:00:00Z as epoch seconds
+    assert deskdata.infer_states([fresh], now=now + 60)["lodging"]["state"] == "working"
+    assert deskdata.infer_states([fresh], now=now + 31 * 60)["lodging"]["state"] == "idle"
+    blocked = {"who": "intel", "kind": "failed", "msg": "x", "at": "2026-09-16T17:00:00+00:00"}
+    assert deskdata.infer_states([blocked], now=now + 3600)["intel"]["state"] == "blocked"
+
+
 def test_org_missing_members_file_is_empty(app_ctx, tmp_path, monkeypatch):
     monkeypatch.setattr(routes.paths, "app_root", lambda: tmp_path / "nowhere")
     body = _body(_call(routes.get_org, app_ctx, query={}))
