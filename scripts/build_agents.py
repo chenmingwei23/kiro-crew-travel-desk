@@ -111,7 +111,7 @@ AGENTS: dict[str, dict] = {
 
 #: The gateway refuses an agent whose file carries an unresolved template token.
 PLACEHOLDER_RE = re.compile(r"\{[A-Z][A-Z0-9_]*\}")
-FORBIDDEN = ("/home/", "/local/", "mingweic", "Raymond", "aim mcp", "amazon")
+FORBIDDEN = ("/home/", "/local/", "/Users/", "aim mcp", "amazon")
 
 
 def render(name: str) -> dict:
