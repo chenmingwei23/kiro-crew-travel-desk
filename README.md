@@ -35,8 +35,8 @@ You give the Tour Leader one sentence. From there:
 From the App Store once listed, or by hand:
 
 ```
-git clone https://github.com/chenmingwei23/kirocrew-travel-desk
-kirocrew app install kirocrew-travel-desk
+git clone https://github.com/chenmingwei23/kiro-crew-travel-desk
+kirocrew app install kiro-crew-travel-desk
 kirocrew restart
 ```
 
@@ -52,6 +52,9 @@ kirocrew config set agent.apps_trusted '["travel-desk"]'
 kirocrew config set agent.apps_trusted_local '["travel-desk"]'
 kirocrew app enable travel-desk
 ```
+
+`config set` replaces the whole list. If `kirocrew config get agent.apps_trusted`
+already names other apps, keep them in the list.
 
 The crew's agents run unattended (a research analyst has nobody to click
 Approve), so their specs auto-approve their own tools; KiroCrew's deny list and
@@ -240,8 +243,8 @@ Travel Desk 是一个 KiroCrew app。一支 13 人的 AI 旅行团把你的一�
 上架后从 App Store 安装，或手动安装：
 
 ```
-git clone https://github.com/chenmingwei23/kirocrew-travel-desk
-kirocrew app install kirocrew-travel-desk
+git clone https://github.com/chenmingwei23/kiro-crew-travel-desk
+kirocrew app install kiro-crew-travel-desk
 kirocrew restart
 ```
 
@@ -256,6 +259,9 @@ kirocrew config set agent.apps_trusted '["travel-desk"]'
 kirocrew config set agent.apps_trusted_local '["travel-desk"]'
 kirocrew app enable travel-desk
 ```
+
+`config set` 会整个替换这个列表。如果 `kirocrew config get agent.apps_trusted` 里已经有
+别的 app，把它们一并写进去。
 
 团队里的 agent 是无人值守运行的（分析师背后没有人点"批准"），所以它们的规格文件对自己的
 工具自动放行；KiroCrew 的命令黑名单和敏感路径检查仍然对它们的每条命令生效。
