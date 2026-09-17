@@ -24,6 +24,35 @@ export function leaderSlot() {
   return isEn() ? 'travel-desk-leader-en' : 'travel-desk-leader'
 }
 
+export function isLeader(m) { return !!m && (m.id === 'leader' || m.layer === 'lead') }
+
+/**
+ * The conversation a member answers in when the guest opens their avatar.
+ * The leader keeps its per-language slot. A resident member (planner, risk,
+ * briefing) that already has a live session is spoken to THERE, so the guest
+ * sees what it is doing; otherwise -- and for every leaf analyst, who has no
+ * session between dispatches -- a per-member, per-language slot the gateway
+ * creates on the first message (`travel-desk-<id>[-en]`).
+ */
+export function memberSlot(m) {
+  if (!m || isLeader(m)) return leaderSlot()
+  if (m.slot_key) return String(m.slot_key)
+  return `travel-desk-${m.id}${isEn() ? '-en' : ''}`
+}
+
+export function memberAgent(m) {
+  return (m && m.agent) || LEADER_AGENT
+}
+
+/** Members shown in the workbench rail: the leader, then whoever is doing or has
+ *  done something on this trip; everyone else folds into one "standing by" row. */
+export function crewActivity(members) {
+  const leader = members.find(isLeader) || null
+  const active = members.filter((m) => m !== leader && m.state && m.state !== 'idle')
+  const standby = members.filter((m) => m !== leader && !active.includes(m))
+  return { leader, active, standby }
+}
+
 /** A member's title / duty / monogram in the interface language (roster fields *_en). */
 export function memberTitle(m) { return (isEn() && m.title_en) || m.title || m.name || '' }
 export function memberDuty(m) { return (isEn() && m.duty_en) || m.duty || '' }
@@ -73,10 +102,15 @@ export async function getSetup() {
  * plan; on an idle slot the flag is ignored and a normal turn starts.
  */
 export async function sendToLeader(message) {
+  return sendToMember(null, message)
+}
+
+/** Same as sendToLeader, into the slot of `member` (null = the leader). */
+export async function sendToMember(member, message) {
   try {
     const resp = await fetch('/api/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, slot: leaderSlot(), agent: LEADER_AGENT, steer: true }),
+      body: JSON.stringify({ message, slot: memberSlot(member), agent: memberAgent(member), steer: true }),
     })
     if (resp.body && typeof resp.body.pipeTo === 'function') {
       resp.body.pipeTo(new WritableStream()).catch(() => { /* the stream ends with the turn */ })

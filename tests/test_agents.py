@@ -120,3 +120,20 @@ def test_leader_speaks_as_a_travel_company():
     # the words that must never reach the guest are called out as such
     for kitchen in ("PASS/REVISE", "no paths, no ids", "sentinel"):
         assert kitchen in prompt
+
+
+def test_members_know_how_to_answer_a_guest_directly():
+    """A guest can open any member's avatar on the trip page. Every member but the
+    leader carries the shared section (built from agents/prompts/_direct.md);
+    the leader has its own voice section and is always spoken to directly."""
+    shared = (ROOT / "agents" / "prompts" / "_direct.md").read_text(encoding="utf-8")
+    assert "## When the guest talks to me directly" in shared
+    for path in AGENT_FILES:
+        prompt = json.loads(path.read_text(encoding="utf-8"))["prompt"]
+        if path.stem == "trip-tour-leader":
+            assert "## When the guest talks to me directly" not in prompt
+            continue
+        assert "## When the guest talks to me directly" in prompt, path.stem
+        assert "viewing.json" in prompt, path.stem
+        # a direct conversation must never turn into a dispatch
+        assert "never return a sentinel" in prompt, path.stem

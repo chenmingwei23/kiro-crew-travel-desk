@@ -89,6 +89,18 @@ def main() -> int:
             pg.locator(".td-chatcard .td-benchbtn").first.click()
             pg.wait_for_timeout(900)
             shot(pg, "workbench")
+            # open a member's conversation from the rail (the fold expands the
+            # standby roster; the first standby member gets picked)
+            fold = pg.locator(".td-rail-fold")
+            if fold.count() > 0:
+                fold.first.click()
+                pg.wait_for_timeout(400)
+                shot(pg, "workbench-roster")
+                pg.locator(".td-crewrail .td-teamlist .td-team-row.pick").first.click()
+                pg.wait_for_timeout(1200)
+                shot(pg, "workbench-member")
+                pg.locator(".td-backleader").click()
+                pg.wait_for_timeout(600)
             pg.locator(".td-benchchat .td-benchbtn").first.click()
             pg.wait_for_timeout(900)
             # scroll to day 1

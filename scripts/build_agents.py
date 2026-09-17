@@ -119,9 +119,17 @@ PLACEHOLDER_RE = re.compile(r"\{[A-Z][A-Z0-9_]*\}")
 FORBIDDEN = ("/home/", "/local/", "/Users/", "aim mcp", "amazon")
 
 
+#: Appended to every member except the leader: what to do when a guest opens the
+#: member's avatar on the trip page and talks to them without a dispatch task.
+#: The leader has its own "How I talk" section and is always spoken to directly.
+SHARED_DIRECT = PROMPTS / "_direct.md"
+
+
 def render(name: str) -> dict:
     spec = AGENTS[name]
     prompt = (PROMPTS / f"{name}.md").read_text(encoding="utf-8").rstrip() + "\n"
+    if name != "trip-tour-leader":
+        prompt += "\n" + SHARED_DIRECT.read_text(encoding="utf-8").rstrip() + "\n"
     agent = {
         "name": name,
         "description": spec["description"],

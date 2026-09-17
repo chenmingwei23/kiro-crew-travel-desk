@@ -101,6 +101,17 @@ const CSS = `
 .td-team-row .d { font-size: 12px; color: ${T.muted}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .td-team-row .st { margin-left: auto; font-size: 12px; color: ${T.muted}; white-space: nowrap; }
 .td-team-row .st.working { color: ${T.ok}; }
+.td-team-row.pick { width: 100%; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+.td-team-row.pick:hover { background: ${T.bg2}; }
+.td-team-row.pick.on { background: ${T.bg2}; box-shadow: inset 3px 0 0 ${T.text}; }
+.td-team-row.pick:focus-visible { outline: 2px solid ${T.text}; outline-offset: -2px; }
+.td-rail-hd { padding: 14px 6px 2px; font-size: 11px; color: ${T.muted}; letter-spacing: .04em; }
+.td-rail-fold { display: flex; align-items: center; gap: 10px; width: 100%; margin-top: 8px; padding: 10px 8px; border: 1px dashed ${T.line}; border-radius: 10px; background: none; color: ${T.muted}; font: inherit; font-size: 13px; cursor: pointer; text-align: left; }
+.td-rail-fold:hover { background: ${T.bg2}; color: ${T.text}; }
+.td-rail-fold .td-avatars .td-avatar + .td-avatar { margin-left: -8px; }
+.td-crewrail .td-teamlist { padding: 0; }
+.td-backleader { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 9999px; background: ${T.bg2}; color: ${T.text}; cursor: pointer; flex-shrink: 0; }
+.td-backleader:hover { background: ${T.line2}; }
 
 /* ── photo tiles ─────────────────────────────────────────────────────── */
 .td-photo { position: relative; overflow: hidden; border-radius: 12px; background: ${T.bg2}; flex-shrink: 0; }
