@@ -7,10 +7,10 @@
 import { createElement as h, useState } from 'react'
 import { Icon, Pill, Photo, Legend, T } from './theme.mjs'
 import { TripMap } from './map.mjs'
-import { ChatCard, TeamList, TripSwitcher, MoreMenu } from './parts.mjs'
+import { ChatCard, CrewRail, TripSwitcher, MoreMenu } from './parts.mjs'
 import {
   fmtRange, fmtMD, weekday, daysUntil, timeRange, dayStops, staysForDay, dayFromTo, heroUrl, localizeHost,
-  sendToLeader, shortName, teamSummary,
+  sendToLeader, shortName, teamSummary, isLeader,
 } from './data.mjs'
 import { t } from './i18n.mjs'
 
@@ -210,6 +210,8 @@ export function TripPage({ view, trips, hiddenTrips, currentId, onPickTrip, memb
 export function Workbench({ view, trips, hiddenTrips, currentId, onPickTrip, members, status, onRefresh, onShowMap, onToast, onOpenSettings, onCloseBench }) {
   const trekUrl = view ? view.trip.url : (status && status.trek && status.trek.url)
   const sum = teamSummary(members)
+  // who the conversation is with: null = the leader; a rail row picks a member
+  const [who, setWho] = useState(null)
   return h('div', { className: 'td-scroll td-benchpage' },
     h(TopBar, { trips: trips || [], hiddenTrips, currentId, onPickTrip, trekUrl, onRefresh, onShowMap, onToast, onOpenSettings, hideMap: true }),
     h('div', { className: 'td-bench' },
@@ -217,13 +219,13 @@ export function Workbench({ view, trips, hiddenTrips, currentId, onPickTrip, mem
         h('div', { className: 'hd' },
           h('div', { className: 't' }, t('team_header', { n: members.length })),
           h('div', { className: 's' }, sum.online ? sum.text : t('team_none'))),
-        h(TeamList, { members }),
+        h(CrewRail, { members, onPick: (m) => setWho(isLeader(m) ? null : m), selectedId: who ? who.id : 'leader' }),
         view ? h('button', { type: 'button', className: 'td-benchtrip', onClick: onCloseBench, title: t('bench_close') },
           h(Icon, { name: 'list', size: 16 }),
           h('span', { style: { minWidth: 0 } },
             h('span', { className: 'n' }, view.trip.title),
             h('span', { className: 'd' }, fmtRange(view.trip.start, view.trip.end)))) : null),
-      h(ChatCard, { members, className: 'td-benchchat', onShrink: onCloseBench, subtitle: t('bench_hint') })))
+      h(ChatCard, { members, className: 'td-benchchat', onShrink: onCloseBench, subtitle: t('bench_hint'), who, onPickWho: setWho })))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────

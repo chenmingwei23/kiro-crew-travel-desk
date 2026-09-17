@@ -104,9 +104,12 @@ Examples:
 - 10 月 17 到 19 日，墨尔本大洋路 3 天自驾，2 个人。
 
 The chat is a side card on the trip page. The corner button opens it as a
-workbench: the conversation fills the page and the crew stands on the left, each
-member with what they are doing. Use that while a trip is being planned; shrink
-it back to read the plan. You can talk to the leader while the crew is still
+workbench: the conversation fills the page and the crew stands on the left --
+the leader, then whoever is working on your trip; the rest fold into one
+"standing by" line. Click any member to talk to them directly (the hotel
+specialist about a hotel, the safety officer about a road); the arrow brings
+you back to the leader, who is the one that changes the plan. Use the workbench
+while a trip is being planned; shrink it back to read the plan. You can talk to the leader while the crew is still
 working -- a side question is answered in passing, and the plan carries on. The
 leader speaks about the trip on your screen, and speaks as a travel company
 would: no file names, no ids, no verdicts.
@@ -331,7 +334,9 @@ kirocrew app enable travel-desk
 - Oct 17–19, Great Ocean Road from Melbourne, 3 days by car, 2 people.
 
 对话默认是行程页右侧的一张卡。卡角的按钮把它放大成工作台：对话铺满页面，
-旅行团站在左边，每个人在做什么一眼可见。规划时用工作台，看行程时缩回去。
+旅行团站在左边——团长，以及正在忙你这趟行程的成员；其余的人收成一行"待命"。
+点任何一位成员就能直接和他聊（酒店问食宿分析师，路况问安全官），箭头回到团长，
+改行程还是团长来。规划时用工作台，看行程时缩回去。
 团队还在忙的时候也可以随时问团长，小问题顺手就答，规划不会中断。团长说的
 是你屏幕上这趟行程，而且像旅行公司的人那样说话：没有文件名、编号和"通过/
 不通过"。
