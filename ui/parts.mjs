@@ -228,7 +228,10 @@ export function ChatCard({ members, className, chips = true, subtitle, onExpand,
         h('div', { className: 's' }, member.state === 'working' ? t('member_busy') : memberDuty(member))),
     ]
     : [
-      h(Avatars, { members, max: 4, onClick: () => setTeamOpen((v) => !v) }),
+      // one face: the person this conversation is with. The full crew is one
+      // click behind it (the trip page has no rail).
+      h('button', { type: 'button', className: 'td-avatarbtn', onClick: () => setTeamOpen((v) => !v), title: t('team_n', { n: members.length }), 'aria-label': t('team_n', { n: members.length }) },
+        h(Avatar, { member: sum.leader || { id: 'leader', title: '团长', title_en: 'Tour Leader', avatar_letter: '团', avatar_letter_en: 'TL', state: sum.busy ? 'working' : '' }, size: 'lg', showState: true })),
       h('div', { className: 'who', style: { flex: 1 } },
         h('div', { className: 't' }, h('span', { className: ['td-online', sum.busy ? 'busy' : ''].join(' ') }), t('leader_title')),
         h('div', { className: 's' }, sum.busy ? t('leader_busy') : (sum.working ? sum.text : (subtitle || t('leader_idle_card'))))),
