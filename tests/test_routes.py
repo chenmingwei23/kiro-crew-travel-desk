@@ -389,6 +389,29 @@ def test_trip_bad_id_400(app_ctx, monkeypatch):
     assert resp.status == 400
 
 
+def test_trip_records_what_is_on_screen(app_ctx, desk_root, make_trip, monkeypatch):
+    """The leader reads viewing.json to know which trip "this trip" is."""
+    _patch_trek(monkeypatch, _FakeTrek())
+    trip = make_trip(desk_root, "202610-great-ocean-road", title="大洋路自驾")
+    (trip / "trek.json").write_text(json.dumps({"trip_id": 5, "url": "x"}), encoding="utf-8")
+    make_trip(desk_root, "202611-canberra", title="Canberra")
+    _call(routes.get_trip, app_ctx, query={"id": "5", "lang": "en"})
+    rec = json.loads((desk_root / "viewing.json").read_text(encoding="utf-8"))
+    assert rec["trip_id"] == 5
+    assert rec["slug"] == "202610-great-ocean-road"
+    assert rec["title"] == "大洋路自驾"
+    assert rec["url"] == "http://127.0.0.1:3000/trips/5"
+    assert rec["lang"] == "en" and rec["at"]
+
+
+def test_trip_view_survives_unwritable_desk(app_ctx, desk_root, monkeypatch):
+    """A desk root that cannot take the note still serves the page."""
+    _patch_trek(monkeypatch, _FakeTrek())
+    (desk_root / "viewing.json").mkdir()  # a directory in the file's place: write fails
+    body = _body(_call(routes.get_trip, app_ctx, query={"id": "5"}))
+    assert body["trip"]["id"] == 5
+
+
 def test_trip_missing_id_400(app_ctx, monkeypatch):
     _patch_trek(monkeypatch, _FakeTrek())
     resp = _call(routes.get_trip, app_ctx, query={})

@@ -29,6 +29,11 @@ OUT = ROOT / "agents"
 BASIC = ["execute_bash", "fs_read", "fs_write", "web_fetch", "web_search"]
 MANAGER = ["execute_bash", "fs_read", "fs_write", "grep", "glob", "web_fetch", "web_search", "@kirocrew-core"]
 
+#: One model for the whole crew. The kiro-cli id (``kiro-cli chat --list-models``);
+#: the gateway keeps ``model`` as a user preference, so a hand edit of the
+#: installed copy survives a refresh.
+MODEL = "gpt-5.6-sol"
+
 HTTP = lambda url: {"type": "http", "url": url, "autoApprove": ["*"]}  # noqa: E731
 
 AGENTS: dict[str, dict] = {
@@ -121,6 +126,7 @@ def render(name: str) -> dict:
         "name": name,
         "description": spec["description"],
         "prompt": prompt,
+        "model": MODEL,
         "tools": list(spec["tools"]),
         "allowedTools": ["*"],
         "includeMcpJson": False,

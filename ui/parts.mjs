@@ -91,6 +91,10 @@ export function LeaderChat({ placeholder, chips = true }) {
   if (exists === false) return h(FreshChat, { slot, placeholder, chips, onReady: () => setExists(true) })
   // `.td-embed` re-declares the dashboard's design tokens so the host chat
   // takes this page's palette and type (see theme.mjs "embedded chat").
+  // `onSend` replaces the embed's own POST: that one awaits the whole reply
+  // stream, which held the composer shut for as long as the team was planning
+  // (see sendToLeader). Ours returns once the message is accepted, and steers a
+  // running turn so a side question is answered mid-plan.
   return h('div', { className: 'td-embed' },
     h(sdk.ChatEmbed, {
       key: slot,
@@ -99,6 +103,7 @@ export function LeaderChat({ placeholder, chips = true }) {
       frameless: true,
       startAtBottom: true,
       placeholder: placeholder || t('placeholder'),
+      onSend: (msg) => sendToLeader(msg),
     }))
 }
 
@@ -113,9 +118,9 @@ function stateText(state) {
   return t(key)
 }
 
-export function TeamPopover({ members, onClose, style }) {
-  const ref = useRef(null)
-  useClickAway(ref, onClose)
+/** The team grouped by layer, one row per member with their state. Shared by the
+ *  popover (trip page) and the standing rail (workbench). */
+export function TeamList({ members }) {
   const byLayer = new Map()
   for (const m of members) {
     const k = m.layer || 'other'
@@ -123,12 +128,7 @@ export function TeamPopover({ members, onClose, style }) {
     byLayer.get(k).push(m)
   }
   const order = LAYERS.map(([k]) => k).concat([...byLayer.keys()].filter((k) => !LAYERS.some(([l]) => l === k)))
-  return h('div', { ref, className: 'td-float td-team', style },
-    h('div', { style: { display: 'flex', alignItems: 'center', padding: '4px 6px 10px' } },
-      h('div', null,
-        h('div', { style: { fontSize: 15, fontWeight: 600 } }, t('team_header', { n: members.length })),
-        h('div', { style: { fontSize: 12, color: T.muted, marginTop: 2 } }, t('team_sub'))),
-      h('button', { type: 'button', onClick: onClose, 'aria-label': t('collapse'), style: { marginLeft: 'auto', border: 0, background: 'none', cursor: 'pointer', color: T.muted, display: 'inline-flex' } }, h(Icon, { name: 'x', size: 16 }))),
+  return h('div', { className: 'td-teamlist' },
     ...order.filter((k) => byLayer.has(k)).map((k) => {
       const layer = LAYERS.find(([l]) => l === k)
       return h('div', { key: k },
@@ -142,19 +142,38 @@ export function TeamPopover({ members, onClose, style }) {
     }))
 }
 
+export function TeamPopover({ members, onClose, style }) {
+  const ref = useRef(null)
+  useClickAway(ref, onClose)
+  return h('div', { ref, className: 'td-float td-team', style },
+    h('div', { style: { display: 'flex', alignItems: 'center', padding: '4px 6px 10px' } },
+      h('div', null,
+        h('div', { style: { fontSize: 15, fontWeight: 600 } }, t('team_header', { n: members.length })),
+        h('div', { style: { fontSize: 12, color: T.muted, marginTop: 2 } }, t('team_sub'))),
+      h('button', { type: 'button', onClick: onClose, 'aria-label': t('collapse'), style: { marginLeft: 'auto', border: 0, background: 'none', cursor: 'pointer', color: T.muted, display: 'inline-flex' } }, h(Icon, { name: 'x', size: 16 }))),
+    h(TeamList, { members }))
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Chat card (trip page, sticky right column)
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function ChatCard({ members, className, chips = true, subtitle }) {
+/**
+ * `onExpand` adds the workbench button: the chat takes the whole page (see
+ * Workbench in trip.mjs). `onShrink` is its counterpart on the workbench's own
+ * card. `team` renders the roster inline instead of behind the avatars.
+ */
+export function ChatCard({ members, className, chips = true, subtitle, onExpand, onShrink }) {
   const [teamOpen, setTeamOpen] = useState(false)
   const sum = teamSummary(members)
   return h('div', { className: ['td-chatcard', className || ''].join(' ') },
     h('div', { className: 'hd', style: { position: 'relative' } },
       h(Avatars, { members, max: 4, onClick: () => setTeamOpen((v) => !v) }),
-      h('div', { className: 'who' },
+      h('div', { className: 'who', style: { flex: 1 } },
         h('div', { className: 't' }, h('span', { className: ['td-online', sum.busy ? 'busy' : ''].join(' ') }), t('leader_title')),
         h('div', { className: 's' }, sum.busy ? t('leader_busy') : (sum.working ? sum.text : (subtitle || t('leader_idle_card'))))),
+      onExpand ? h(IconButton, { name: 'expand', size: 16, onClick: onExpand, title: t('bench_open'), className: 'td-benchbtn' }) : null,
+      onShrink ? h(IconButton, { name: 'shrink', size: 16, onClick: onShrink, title: t('bench_close'), className: 'td-benchbtn' }) : null,
       teamOpen ? h(TeamPopover, { members, onClose: () => setTeamOpen(false), style: { top: 56, left: 12, right: 12, width: 'auto' } }) : null),
     h('div', { className: 'bd' }, h(LeaderChat, { chips })))
 }

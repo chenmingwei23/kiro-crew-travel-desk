@@ -14,7 +14,7 @@
 import { createElement as h, useState, useEffect, useRef, useCallback } from 'react'
 import { injectStyles, Pill, Icon } from './theme.mjs'
 import { getJSON, usePoll, readPref, writePref, PREF } from './data.mjs'
-import { TripPage, EmptyState } from './trip.mjs'
+import { TripPage, EmptyState, Workbench } from './trip.mjs'
 import { MapView } from './mapview.mjs'
 import { SettingsPage } from './settings.mjs'
 import { ConnectPage } from './setup.mjs'
@@ -47,6 +47,7 @@ export default function TravelDesk() {
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState(() => (readPref(PREF.view, 'trip') === 'map' ? 'map' : 'trip'))
   const [settingsOpen, setSettingsOpen] = useState(false)
+  const [bench, setBench] = useState(() => readPref(PREF.bench, '') === '1') // chat fills the page
   const [mapDay, setMapDay] = useState(null)
   const [mapSelected, setMapSelected] = useState(null)
   const [toast, setToast] = useState('')
@@ -89,14 +90,15 @@ export default function TravelDesk() {
   const loadView = useCallback(async () => {
     if (currentId == null) return
     try {
-      const v = await getJSON(`/trip?id=${encodeURIComponent(currentId)}`)
+      // `lang` rides along so the desk's note of what is on screen names the language too
+      const v = await getJSON(`/trip?id=${encodeURIComponent(currentId)}&lang=${encodeURIComponent(lang)}`)
       setView(v); setViewError('')
     } catch (err) {
       setViewError(String((err && err.message) || err))
     } finally {
       setLoading(false)
     }
-  }, [currentId])
+  }, [currentId, lang])
 
   useEffect(() => {
     setView(null); setViewError('')
@@ -150,6 +152,8 @@ export default function TravelDesk() {
     setMode('map'); writePref(PREF.view, 'map')
   }, [])
   const showTrip = useCallback(() => { setMode('trip'); writePref(PREF.view, 'trip') }, [])
+  const openBench = useCallback(() => { setBench(true); writePref(PREF.bench, '1') }, [])
+  const closeBench = useCallback(() => { setBench(false); writePref(PREF.bench, '') }, [])
 
   const noTrips = !!trips && tripList.length === 0
   // The backend connects on its own when it can (login on file, a planner already
@@ -168,14 +172,16 @@ export default function TravelDesk() {
     body = h(ConnectPage, { status, onOpenSettings: openSettings, onDone: onConnected })
   } else if (mode === 'map' && !noTrips) {
     body = h(MapView, { ...common, view, initialDay: mapDay, initialSelected: mapSelected, onBack: showTrip })
+  } else if (bench) {
+    body = h(Workbench, { ...common, view: noTrips ? null : view, onShowMap: showMap, onCloseBench: closeBench })
   } else if (noTrips) {
-    body = h(EmptyState, { ...common })
+    body = h(EmptyState, { ...common, onOpenBench: openBench })
   } else {
-    body = h(TripPage, { ...common, view, onShowMap: showMap, loading, error: viewError || (trips && trips.error) || tripsError })
+    body = h(TripPage, { ...common, view, onShowMap: showMap, onOpenBench: openBench, loading, error: viewError || (trips && trips.error) || tripsError })
   }
 
   return h('div', { className: 'td-root' },
     body,
-    !settingsOpen && !notConnected && !noTrips && mode === 'trip' && view ? h(Pill, { dark: true, className: 'td-showmap', onClick: () => showMap(null, null) }, h(Icon, { name: 'map', size: 18 }), t('see_map')) : null,
+    !settingsOpen && !notConnected && !noTrips && !bench && mode === 'trip' && view ? h(Pill, { dark: true, className: 'td-showmap', onClick: () => showMap(null, null) }, h(Icon, { name: 'map', size: 18 }), t('see_map')) : null,
     toast ? h('div', { className: 'td-toast', role: 'status' }, toast) : null)
 }

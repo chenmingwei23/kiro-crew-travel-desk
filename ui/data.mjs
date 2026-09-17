@@ -11,6 +11,7 @@ export const API = `/api/apps/${APP}`
 export const LEADER_AGENT = 'trip-tour-leader'
 const LS_TRIP = 'travel-desk.trip'
 const LS_VIEW = 'travel-desk.view'
+const LS_BENCH = 'travel-desk.bench' // '1' = the chat fills the page (workbench)
 
 /**
  * The leader conversation is PER LANGUAGE: `travel-desk-leader` (中文) and
@@ -58,15 +59,32 @@ export async function getSetup() {
   return getJSON('/setup')
 }
 
-/** Send one message into the leader's slot for the current language (same call ChatEmbed makes). */
+/**
+ * Send one message into the leader's slot for the current language.
+ *
+ * Returns as soon as the gateway has ACCEPTED the message, not when the leader
+ * has finished answering: the reply is a server-sent stream that lasts the whole
+ * turn (a full plan runs half an hour), and the host embed keeps its composer
+ * disabled while the send is pending. The body is drained in the background so
+ * the connection is not left half-read.
+ *
+ * `steer` asks the gateway to hand the text to a turn that is already running
+ * (a side question while the team plans) instead of queueing it behind the
+ * plan; on an idle slot the flag is ignored and a normal turn starts.
+ */
 export async function sendToLeader(message) {
   try {
-    await fetch('/api/chat', {
+    const resp = await fetch('/api/chat', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message, slot: leaderSlot(), agent: LEADER_AGENT }),
+      body: JSON.stringify({ message, slot: leaderSlot(), agent: LEADER_AGENT, steer: true }),
     })
+    if (resp.body && typeof resp.body.pipeTo === 'function') {
+      resp.body.pipeTo(new WritableStream()).catch(() => { /* the stream ends with the turn */ })
+    } else {
+      resp.text().catch(() => '')
+    }
   } catch (err) {
-    /* the SSE body is not JSON; the embed refetches on its own */
+    /* the embed refetches on its own */
   }
 }
 
@@ -103,7 +121,7 @@ export function readPref(key, fallback) {
 export function writePref(key, value) {
   try { window.localStorage.setItem(key, String(value)) } catch (err) { /* private mode */ }
 }
-export const PREF = { trip: LS_TRIP, view: LS_VIEW }
+export const PREF = { trip: LS_TRIP, view: LS_VIEW, bench: LS_BENCH }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Dates & names
