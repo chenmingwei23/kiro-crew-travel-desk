@@ -17,7 +17,7 @@ import { getJSON, usePoll, readPref, writePref, PREF } from './data.mjs'
 import { TripPage, EmptyState } from './trip.mjs'
 import { MapView } from './mapview.mjs'
 import { SettingsPage } from './settings.mjs'
-import { SetupPage } from './setup.mjs'
+import { ConnectPage } from './setup.mjs'
 import { t, useLang } from './i18n.mjs'
 
 injectStyles()
@@ -47,7 +47,6 @@ export default function TravelDesk() {
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState(() => (readPref(PREF.view, 'trip') === 'map' ? 'map' : 'trip'))
   const [settingsOpen, setSettingsOpen] = useState(false)
-  const [setupDismissed, setSetupDismissed] = useState(false)
   const [mapDay, setMapDay] = useState(null)
   const [mapSelected, setMapSelected] = useState(null)
   const [toast, setToast] = useState('')
@@ -153,18 +152,20 @@ export default function TravelDesk() {
   const showTrip = useCallback(() => { setMode('trip'); writePref(PREF.view, 'trip') }, [])
 
   const noTrips = !!trips && tripList.length === 0
-  const setupNeeded = !!(status && status.setup_needed) && !setupDismissed
+  // The backend connects on its own when it can (login on file, a planner already
+  // in local Docker, a valid ticket). Only while none of that holds is there
+  // nothing to show, and the page offers the one-click run + the Settings row.
+  const notConnected = !!(status && status.setup_needed)
   const openSettings = useCallback(() => setSettingsOpen(true), [])
   const closeSettings = useCallback(() => setSettingsOpen(false), [])
-  const leaveSetup = useCallback(() => { setSetupDismissed(true); reloadStatus() }, [reloadStatus])
-  const skipSetup = useCallback(() => setSetupDismissed(true), [])
+  const onConnected = useCallback(() => { reloadStatus(); reloadTrips() }, [reloadStatus, reloadTrips])
   const common = { trips: tripList, hiddenTrips, currentId, onPickTrip, members, status, onRefresh, onToast: showToast, onOpenSettings: openSettings }
 
   let body
   if (settingsOpen) {
     body = h(SettingsPage, { status, members, onBack: closeSettings, onRefresh, onToast: showToast })
-  } else if (setupNeeded) {
-    body = h(SetupPage, { onDone: leaveSetup, onSkip: skipSetup })
+  } else if (notConnected) {
+    body = h(ConnectPage, { status, onOpenSettings: openSettings, onDone: onConnected })
   } else if (mode === 'map' && !noTrips) {
     body = h(MapView, { ...common, view, initialDay: mapDay, initialSelected: mapSelected, onBack: showTrip })
   } else if (noTrips) {
@@ -175,6 +176,6 @@ export default function TravelDesk() {
 
   return h('div', { className: 'td-root' },
     body,
-    !settingsOpen && !setupNeeded && !noTrips && mode === 'trip' && view ? h(Pill, { dark: true, className: 'td-showmap', onClick: () => showMap(null, null) }, h(Icon, { name: 'map', size: 18 }), t('see_map')) : null,
+    !settingsOpen && !notConnected && !noTrips && mode === 'trip' && view ? h(Pill, { dark: true, className: 'td-showmap', onClick: () => showMap(null, null) }, h(Icon, { name: 'map', size: 18 }), t('see_map')) : null,
     toast ? h('div', { className: 'td-toast', role: 'status' }, toast) : null)
 }

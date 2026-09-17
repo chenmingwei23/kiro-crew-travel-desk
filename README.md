@@ -62,13 +62,26 @@ sensitive-path checks still apply to every command they run.
 
 ## First run
 
-Open Travel Desk in the sidebar. The first time, a setup screen asks how you
-want a trip planner:
+Open Travel Desk in the sidebar. There is no login screen to get through. The
+app connects to a trip planner on its own whenever it can, in this order:
 
-- Run it for me. The app starts the trip planner in a Docker container bound to
-  loopback and keeps its state under the desk root.
-- I already run one. Give the app the address, admin email and password of your
-  existing TREK instance. The app tests the login before saving it.
+- A login already saved in `<desk root>/trek.env`.
+- A trip planner already running in Docker on this machine and publishing the
+  configured port (`http://127.0.0.1:3000` by default). The app reads the admin
+  login the container was started with, tests it, and saves it as if you had
+  typed it. Nothing to enter.
+- A login ticket the planner issued earlier (`<desk root>/.trek_token`), for as
+  long as it is valid.
+
+Only when none of those exist does the page offer two things:
+
+- Run it for me. One click. The app starts the trip planner in a Docker
+  container bound to loopback, keeps its state under the desk root, and
+  generates the admin login itself (`admin@travel-desk.local` plus a random
+  password). Open "Custom login and port" if you want your own.
+- Settings. The trip planner row holds the address and admin login of a planner
+  you run elsewhere; the app tests the login before saving it. The same row
+  later shows where the login came from and lets you change it.
 
 User data lives at the desk root, by default `<gateway home>/workspace/travel-desk`:
 trips, long-term memory, backups, and the container's own state when the app
@@ -140,9 +153,11 @@ All outbound calls carry a `travel-desk` User-Agent.
 
 ## Troubleshooting
 
-- The page shows "Connect your trip planner" again after setup. The saved login
-  stopped working or the service is down; open Settings, Trip planner, and test
-  the connection.
+- The page shows "Connect a trip planner" again later. Either the planner is
+  down, or the app has no login for it and its ticket expired (tickets last 24
+  hours). If the planner runs in Docker on this machine, the app picks the login
+  up again by itself within a minute; otherwise open Settings, Trip planner, and
+  enter the admin login once.
 - The leader reports that `session_create` / `session_send` were refused with
   "the signed pid mapping for this session did not verify". Those tools need
   KiroCrew's identity channel, which the OS sandbox provides on Linux (user
@@ -195,11 +210,11 @@ sentence.
 | | |
 |---|---|
 | ![First-run setup](design/evidence/setup-en.png) | ![Trip page](design/evidence/trip-page-en.png) |
-| First-run setup: run the trip planner in Docker, or connect an existing one | The trip page: hero, facts, one block per day, the Tour Leader alongside |
+| Only when nothing connects on its own: one click runs a trip planner in Docker; an existing one is entered in Settings | The trip page: hero, facts, one block per day, the Tour Leader alongside |
 | ![Day block and the leader's report](design/evidence/trip-day-and-leader-en.png) | ![Map view](design/evidence/map-all-en.png) |
 | The crew's finished Canberra weekend with the leader's report in the chat | Full map view: numbered stops, overnight stays, photo cards per day |
 | ![Team](design/evidence/team-en.png) | ![Settings](design/evidence/settings-en.png) |
-| The 13-member crew and what each one does | Settings: language, the trip planner connection, advanced controls |
+| The 13-member crew and what each one does | Settings: language, the trip planner row (address, login and where it came from), advanced controls |
 
 The same pages in 中文: [trip page](design/evidence/trip-page-zh.png),
 [map](design/evidence/map-all-zh.png), [setup](design/evidence/setup-zh.png).
@@ -268,12 +283,20 @@ kirocrew app enable travel-desk
 
 ## 首次运行
 
-在侧边栏打开 Travel Desk。第一次会出现一个设置页，问你想怎么用行程服务：
+在侧边栏打开 Travel Desk。没有登录页。app 能自己连上行程服务就自己连，顺序是：
 
-- 帮我运行。app 用 Docker 启动一个只绑定本机回环地址的行程服务容器，其状态
-  保存在 desk root 下。
-- 我已经在跑一个。把你现有 TREK 实例的地址、管理员邮箱和密码给 app，app 会
-  先测试登录再保存。
+- `<desk root>/trek.env` 里已经保存的登录。
+- 本机 Docker 里已经在跑、并且发布了配置端口（默认 `http://127.0.0.1:3000`）的行程
+  服务。app 读出容器启动时带的管理员登录，先测试，再像你手填的一样保存。一个字不用填。
+- 行程服务之前发过的登录票据（`<desk root>/.trek_token`），在有效期内直接用。
+
+三样都没有时，页面才给出两条路：
+
+- 帮我运行。一键。app 用 Docker 启动一个只绑定本机回环地址的行程服务容器，状态保存在
+  desk root 下，管理员账号由 app 自己生成（`admin@travel-desk.local` 加随机密码）。想用
+  自己的账号，点"自定义账号和端口"。
+- 设置。"行程服务"那一行填你在别处运行的实例的地址和管理员登录，app 先测试再保存。
+  这一行以后也显示登录是从哪来的，随时可改。
 
 用户数据放在 desk root，默认是 `<gateway home>/workspace/travel-desk`：行程、
 长期记忆、备份，以及 app 自己运行容器时容器的状态。行程服务的登录信息写在
@@ -339,8 +362,9 @@ kirocrew app enable travel-desk
 
 ## 排障
 
-- 设置完成后页面又回到"连接你的行程服务"：保存的登录失效了，或者服务停了。打开设置里的
-  "行程服务"，重新测试连接。
+- 后来页面又出现"连接行程服务"：要么服务停了，要么 app 没有它的登录、票据又过期了
+  （票据 24 小时有效）。行程服务在本机 Docker 里的话，app 一分钟内会自己把登录再读回来；
+  否则打开设置里的"行程服务"，填一次管理员登录。
 - 团长说 `session_create` / `session_send` 被拒绝，提示 "the signed pid mapping for this
   session did not verify"：这些工具需要 KiroCrew 的身份通道，Linux（user namespace）和
   macOS（`sandbox-exec`）的系统沙箱会提供它。没有沙箱的机器上，把两个宿主服务改走 KiroCrew
@@ -388,8 +412,8 @@ tests/        pytest 测试
 
 | | |
 |---|---|
-| ![首次设置](design/evidence/setup-zh.png) | ![行程页](design/evidence/trip-page-zh.png) |
-| 首次设置：用 Docker 启动行程服务，或连接已有的一个 | 行程页：大图、要点、按天分块，团长在右侧 |
+| ![连接页](design/evidence/setup-zh.png) | ![行程页](design/evidence/trip-page-zh.png) |
+| 只在自动连不上时出现：一键用 Docker 运行行程服务；已有的在设置里填 | 行程页：大图、要点、按天分块，团长在右侧 |
 | ![地图](design/evidence/map-all-zh.png) | ![团长的汇报](design/evidence/trip-day-and-leader-en.png) |
 | 整页地图：编号停留点、住宿、每天的照片卡 | 团队做完堪培拉周末后，团长在聊天里的汇报（英文请求，英文行程） |
 

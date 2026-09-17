@@ -292,14 +292,17 @@ def make_handler(state: State):
                 email = str(body.get("email") or "").strip()
                 password = str(body.get("password") or "")
                 port = int(body.get("port") or 3000)
-                if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+                if not email and not password:  # one click: the app generates the login
+                    email = "admin@travel-desk.local"
+                elif not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
                     _json(self, {"error": "a valid admin email is required"}, 400)
                     return
-                if len(password) < 8:
+                elif len(password) < 8:
                     _json(self, {"error": "the admin password must be at least 8 characters"}, 400)
                     return
                 state.setup = False
-                _json(self, {"ok": True, "action": action, "url": f"http://127.0.0.1:{port}", "reachable": True})
+                _json(self, {"ok": True, "action": action, "url": f"http://127.0.0.1:{port}", "reachable": True,
+                             "email": email, "env_path": str(DESK_ROOT / "trek.env")})
                 return
             if action in ("start", "stop", "restart", "upgrade", "backup"):
                 _json(self, {"ok": True, "action": action})
@@ -311,22 +314,25 @@ def make_handler(state: State):
                 if route == "/status":
                     if state.setup:
                         trek = {"url": TREK_URL, "reachable": False, "configured": False,
-                                "authenticated": None, "auth_error": "", "running": False,
-                                "healthy": False, "managed": False,
+                                "login_source": "none", "adopted_container": "",
+                                "authenticated": None, "auth_error": "", "connected": False,
+                                "running": False, "healthy": False, "managed": False,
                                 "container": {"name": "travel-desk-trek", "running": None, "docker": False}}
                     else:
                         trek = {"url": TREK_URL, "reachable": True, "configured": True,
-                                "authenticated": True, "auth_error": "", "running": True,
-                                "healthy": True, "managed": True,
+                                "login_source": "detected", "adopted_container": "",
+                                "authenticated": True, "auth_error": "", "connected": True,
+                                "running": True, "healthy": True, "managed": True,
                                 "container": {"name": "travel-desk-trek", "running": True, "docker": True}}
                     _json(self, {"trek": trek, "setup_needed": bool(state.setup),
                                  "desk_root": str(DESK_ROOT), "leader_slot": "travel-desk-leader",
                                  "leader_slot_en": "travel-desk-leader-en",
-                                 "leader_agent": "trip-tour-leader", "version": "1.0.0"})
+                                 "leader_agent": "trip-tour-leader", "version": "1.1.0"})
                 elif route == "/setup":
                     _json(self, {"trek_url": TREK_URL,
                                  "email": "" if state.setup else "admin@example.com",
-                                 "has_password": not state.setup, "managed": not state.setup,
+                                 "has_password": not state.setup, "has_ticket": False, "managed": not state.setup,
+                                 "env_path": str(DESK_ROOT / "trek.env"),
                                  "container": "travel-desk-trek", "image": "mauriceboe/trek",
                                  "desk_root": str(DESK_ROOT), "data_dir": str(state.data_dir),
                                  "port": _port_of(TREK_URL), "docker_available": True,

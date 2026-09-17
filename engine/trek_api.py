@@ -139,6 +139,12 @@ class TrekAPI:
             self.login(force=True)
             return self.call(method, path, body)
 
+    def me(self) -> dict:
+        """The logged-in account. Validates a cached ticket: on 401 it logs in
+        again once when a login is on file, else raises the "no login" error."""
+        out = self._authed("GET", "/api/auth/me")
+        return out if isinstance(out, dict) else {}
+
     def list_trips(self) -> list:
         out = self._authed("GET", "/api/trips")
         return out if isinstance(out, list) else []

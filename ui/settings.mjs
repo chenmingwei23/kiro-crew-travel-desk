@@ -9,7 +9,7 @@ import { createElement as h, useState, useEffect } from 'react'
 import { Icon, Pill, T } from './theme.mjs'
 import { postJSON, getSetup, localizeHost } from './data.mjs'
 import { t, getLang, setLang, LANGS } from './i18n.mjs'
-import { ConnectForm } from './setup.mjs'
+import { ConnectForm, RunCard } from './setup.mjs'
 
 function Section({ icon, title, sub, children }) {
   return h('section', { className: 'td-sec' },
@@ -38,10 +38,14 @@ function ServiceSection({ status, onRefresh, onToast }) {
   const trek = (status && status.trek) || {}
   const container = trek.container || {}
   const up = !!trek.running
+  const connected = !!trek.connected
   const url = trek.url ? localizeHost(trek.url) : ''
   const email = (setup && setup.email) || ''
   const managed = !!trek.managed
   const showAdvanced = managed || !!container.docker
+  const canRun = !connected && !up && !!(setup && setup.docker_available)
+  const sourceNote = trek.login_source === 'detected' ? t('svc_login_detected')
+    : trek.login_source === 'ticket' ? t('svc_login_ticket') : ''
 
   // Reload the connection settings (address + login email) after a refresh.
   useEffect(() => {
@@ -63,17 +67,22 @@ function ServiceSection({ status, onRefresh, onToast }) {
     h('div', { className: 'td-kv' },
       h('span', { className: 'k' }, t('svc_status')),
       h('span', { className: 'v' },
-        h('span', { className: 'td-online', style: { background: up ? T.ok : T.warn } }),
-        up ? t('svc_running') : t('svc_stopped'))),
+        h('span', { className: 'td-online', style: { background: connected ? T.ok : T.warn } }),
+        connected ? t('svc_connected') : up ? t('svc_running_no_login') : t('svc_stopped'))),
     url ? h('div', { className: 'td-kv' },
       h('span', { className: 'k' }, t('svc_url')),
       h('span', { className: 'v' }, h('a', { href: url, target: '_blank', rel: 'noreferrer' }, url))) : null,
     h('div', { className: 'td-kv' },
       h('span', { className: 'k' }, t('svc_login')),
-      h('span', { className: 'v' }, email || t('svc_not_connected'))),
+      h('span', { className: 'v' }, email || (trek.login_source === 'ticket' ? t('svc_login_ticket_only') : t('svc_not_connected')),
+        sourceNote ? h('span', { className: 'td-kv-note' }, sourceNote) : null)),
+    !connected && trek.auth_error ? h('div', { className: 'td-form-msg bad', style: { marginTop: 6 } }, trek.auth_error) : null,
+    canRun ? h('div', { className: 'td-adv open' },
+      h('div', { className: 'td-adv-title' }, t('svc_run')),
+      h(RunCard, { setup, small: true, onDone: onRefresh })) : null,
     h('div', { className: 'td-adv' },
       h('button', { type: 'button', className: 'td-adv-toggle', onClick: () => setEdit((v) => !v), 'aria-expanded': edit },
-        t('svc_edit'), h(Icon, { name: 'chevron', size: 14, style: { transform: edit ? 'rotate(180deg)' : 'none' } })),
+        connected || email ? t('svc_edit') : t('svc_connect_existing'), h(Icon, { name: 'chevron', size: 14, style: { transform: edit ? 'rotate(180deg)' : 'none' } })),
       edit ? h(ConnectForm, { initial: setup, onSaved: () => { setEdit(false); if (onRefresh) onRefresh() } }) : null),
     showAdvanced ? h('div', { className: 'td-adv' },
       h('button', { type: 'button', className: 'td-adv-toggle', onClick: () => setAdvanced((v) => !v), 'aria-expanded': advanced },
