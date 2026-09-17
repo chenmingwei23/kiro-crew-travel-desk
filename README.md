@@ -73,15 +73,19 @@ app connects to a trip planner on its own whenever it can, in this order:
 - A login ticket the planner issued earlier (`<desk root>/.trek_token`), for as
   long as it is valid.
 
-Only when none of those exist does the page offer two things:
+Only when none of those exist does a page appear, and the page is the action:
 
-- Run it for me. One click. The app starts the trip planner in a Docker
-  container bound to loopback, keeps its state under the desk root, and
-  generates the admin login itself (`admin@travel-desk.local` plus a random
-  password). Open "Custom login and port" if you want your own.
-- Settings. The trip planner row holds the address and admin login of a planner
-  you run elsewhere; the app tests the login before saving it. The same row
-  later shows where the login came from and lets you change it.
+- A planner answers at the address but has no login here: a sign-in form
+  (address, admin email, password) and one Connect button. The app tests the
+  login before saving it.
+- Nothing answers: Run it for me, one click. The app starts the trip planner
+  in a Docker container bound to loopback, keeps its state under the desk root,
+  and generates the admin login itself (`admin@travel-desk.local` plus a random
+  password; "Custom login and port" if you want your own). Below it, the same
+  sign-in form for a planner you run elsewhere.
+
+The Settings page keeps the trip planner row: connection state, address, the
+login and where it came from, and a form to change it.
 
 User data lives at the desk root, by default `<gateway home>/workspace/travel-desk`:
 trips, long-term memory, backups, and the container's own state when the app
@@ -153,11 +157,10 @@ All outbound calls carry a `travel-desk` User-Agent.
 
 ## Troubleshooting
 
-- The page shows "Connect a trip planner" again later. Either the planner is
-  down, or the app has no login for it and its ticket expired (tickets last 24
-  hours). If the planner runs in Docker on this machine, the app picks the login
-  up again by itself within a minute; otherwise open Settings, Trip planner, and
-  enter the admin login once.
+- The sign-in page shows up again later. The app has no login for the planner
+  and its ticket expired (tickets last 24 hours). If the planner runs in Docker
+  on this machine, the app picks the login up again by itself within a minute;
+  otherwise sign in once on that page.
 - The leader reports that `session_create` / `session_send` were refused with
   "the signed pid mapping for this session did not verify". Those tools need
   KiroCrew's identity channel, which the OS sandbox provides on Linux (user
@@ -210,7 +213,7 @@ sentence.
 | | |
 |---|---|
 | ![First-run setup](design/evidence/setup-en.png) | ![Trip page](design/evidence/trip-page-en.png) |
-| Only when nothing connects on its own: one click runs a trip planner in Docker; an existing one is entered in Settings | The trip page: hero, facts, one block per day, the Tour Leader alongside |
+| Only when nothing connects on its own: one click runs a trip planner in Docker, or sign in to one you already run | The trip page: hero, facts, one block per day, the Tour Leader alongside |
 | ![Day block and the leader's report](design/evidence/trip-day-and-leader-en.png) | ![Map view](design/evidence/map-all-en.png) |
 | The crew's finished Canberra weekend with the leader's report in the chat | Full map view: numbered stops, overnight stays, photo cards per day |
 | ![Team](design/evidence/team-en.png) | ![Settings](design/evidence/settings-en.png) |
@@ -290,13 +293,15 @@ kirocrew app enable travel-desk
   服务。app 读出容器启动时带的管理员登录，先测试，再像你手填的一样保存。一个字不用填。
 - 行程服务之前发过的登录票据（`<desk root>/.trek_token`），在有效期内直接用。
 
-三样都没有时，页面才给出两条路：
+三样都没有时才出现一页，而这一页本身就是动作：
 
-- 帮我运行。一键。app 用 Docker 启动一个只绑定本机回环地址的行程服务容器，状态保存在
-  desk root 下，管理员账号由 app 自己生成（`admin@travel-desk.local` 加随机密码）。想用
-  自己的账号，点"自定义账号和端口"。
-- 设置。"行程服务"那一行填你在别处运行的实例的地址和管理员登录，app 先测试再保存。
-  这一行以后也显示登录是从哪来的，随时可改。
+- 地址上有行程服务在回应、但这里没有它的登录：一个登录表单（地址、管理员邮箱、密码）
+  和一个"连接"按钮。app 先测试登录再保存。
+- 什么都没回应：一键"帮我运行"。app 用 Docker 启动一个只绑定本机回环地址的行程服务容器，
+  状态保存在 desk root 下，管理员账号由 app 自己生成（`admin@travel-desk.local` 加随机密码；
+  想用自己的账号，点"自定义账号和端口"）。下面是同一个登录表单，给在别处运行的实例用。
+
+设置页保留"行程服务"一行：连接状态、地址、登录和它从哪来，以及修改用的表单。
 
 用户数据放在 desk root，默认是 `<gateway home>/workspace/travel-desk`：行程、
 长期记忆、备份，以及 app 自己运行容器时容器的状态。行程服务的登录信息写在
@@ -362,9 +367,8 @@ kirocrew app enable travel-desk
 
 ## 排障
 
-- 后来页面又出现"连接行程服务"：要么服务停了，要么 app 没有它的登录、票据又过期了
-  （票据 24 小时有效）。行程服务在本机 Docker 里的话，app 一分钟内会自己把登录再读回来；
-  否则打开设置里的"行程服务"，填一次管理员登录。
+- 后来又出现登录页：app 没有行程服务的登录，票据又过期了（票据 24 小时有效）。行程服务在
+  本机 Docker 里的话，app 一分钟内会自己把登录再读回来；否则在那一页登录一次。
 - 团长说 `session_create` / `session_send` 被拒绝，提示 "the signed pid mapping for this
   session did not verify"：这些工具需要 KiroCrew 的身份通道，Linux（user namespace）和
   macOS（`sandbox-exec`）的系统沙箱会提供它。没有沙箱的机器上，把两个宿主服务改走 KiroCrew
@@ -413,7 +417,7 @@ tests/        pytest 测试
 | | |
 |---|---|
 | ![连接页](design/evidence/setup-zh.png) | ![行程页](design/evidence/trip-page-zh.png) |
-| 只在自动连不上时出现：一键用 Docker 运行行程服务；已有的在设置里填 | 行程页：大图、要点、按天分块，团长在右侧 |
+| 只在自动连不上时出现：一键用 Docker 运行行程服务，或登录已有的 | 行程页：大图、要点、按天分块，团长在右侧 |
 | ![地图](design/evidence/map-all-zh.png) | ![团长的汇报](design/evidence/trip-day-and-leader-en.png) |
 | 整页地图：编号停留点、住宿、每天的照片卡 | 团队做完堪培拉周末后，团长在聊天里的汇报（英文请求，英文行程） |
 

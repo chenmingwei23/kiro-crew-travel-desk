@@ -345,7 +345,7 @@ const CSS = `
 
 /* ── setup page (first run) ───────────────────────────────────────────── */
 .td-setup { max-width: 900px; margin: 0 auto; padding: 48px 32px 120px; }
-.td-setup-hero { text-align: center; margin-bottom: 40px; }
+.td-setup-hero { text-align: center; margin-bottom: 28px; }
 .td-setup-hero h1 { margin: 0 0 12px; font-size: 34px; font-weight: 700; letter-spacing: -.01em; }
 .td-setup-hero p { max-width: 560px; margin: 0 auto; font-size: 16px; color: ${T.muted}; line-height: 1.6; }
 .td-setup-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; }
@@ -354,7 +354,12 @@ const CSS = `
 .td-setup-card h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
 .td-setup-card .sub { margin: 0 0 6px; font-size: 13px; color: ${T.muted}; line-height: 1.5; }
 .td-setup-card .grow { flex: 1; }
-.td-setup .td-setup-card { max-width: 560px; margin: 0 auto; }
+.td-setup .td-setup-card { max-width: 480px; margin: 0 auto; }
+.td-setup-card h2 { margin: 4px 0 6px; }
+.td-wide { width: 100%; justify-content: center; margin-top: 6px; }
+.td-form.primary input { font-size: 15px; }
+.td-or { display: flex; align-items: center; gap: 12px; margin: 18px 0 12px; color: ${T.muted}; font-size: 13px; }
+.td-or::before, .td-or::after { content: ''; flex: 1; border-top: 1px solid ${T.line2}; }
 .td-run.small .td-form-row { margin-top: 0; }
 .td-run-note { margin: 10px 0 0; font-size: 13px; color: ${T.muted}; line-height: 1.5; }
 .td-linkbtn { border: 0; background: none; padding: 8px 4px; font-size: 13px; color: ${T.muted}; text-decoration: underline; cursor: pointer; }

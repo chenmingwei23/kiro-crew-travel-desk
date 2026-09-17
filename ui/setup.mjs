@@ -1,12 +1,12 @@
 /**
  * setup.mjs — connecting the trip planner, without a login wall.
  *
- * The crew stores every trip in a self-hosted trip planner the user owns. The
- * backend connects on its own whenever it can (a login on file, a planner
+ * The backend connects on its own whenever it can (a login on file, a planner
  * already running in Docker on this machine, a still-valid ticket). Only when
- * none of those exist does index.mjs show ConnectPage: one click to run a
- * planner in Docker (the app generates the admin login), or a pointer to the
- * Settings row where an existing planner's address and login live.
+ * none of those holds does index.mjs show ConnectPage, and the page IS the
+ * action: the sign-in form when a planner answers but has no login here, or a
+ * one-click Docker run above the same form when nothing answers. No detour, no
+ * paragraphs -- labels, fields and one primary button.
  *
  * ConnectForm and RunCard are also embedded in the Settings page.
  */
@@ -18,26 +18,28 @@ import { t } from './i18n.mjs'
 
 const DEFAULT_ADDRESS = 'http://127.0.0.1:3000'
 
-function Field({ label, hint, type, value, onChange, placeholder, disabled, inputMode }) {
+function Field({ label, hint, type, value, onChange, placeholder, disabled, inputMode, autoFocus }) {
   return h('label', { className: 'td-field' },
     h('span', { className: 'lbl' }, label, hint ? h('span', { className: 'hint' }, hint) : null),
     h('input', {
-      type: type || 'text', value, disabled, placeholder, inputMode,
+      type: type || 'text', value, disabled, placeholder, inputMode, autoFocus,
       onChange: (e) => onChange(e.target.value),
     }))
 }
 
 /**
- * Address / email / password with "Test connection" and "Save" — the Settings
- * row for a planner the user runs elsewhere. `onSaved` fires after a successful
- * save so the caller can refresh status.
+ * Address / email / password. In Settings it carries "Test connection" and
+ * "Save"; on the connect page (`primary`) a single full-width "Connect" does
+ * both. `onSaved` fires after a successful save so the caller can refresh.
  */
-export function ConnectForm({ initial, onSaved, saveLabel }) {
+export function ConnectForm({ initial, onSaved, saveLabel, primary }) {
   const [address, setAddress] = useState((initial && initial.trek_url) || DEFAULT_ADDRESS)
   const [email, setEmail] = useState((initial && initial.email) || '')
   const [password, setPassword] = useState('')
   const [busy, setBusy] = useState('') // '' | 'test' | 'save'
   const [msg, setMsg] = useState(null) // { good: bool, text }
+
+  useEffect(() => { if (initial && initial.trek_url) setAddress(initial.trek_url) }, [initial && initial.trek_url])
 
   async function submit(testOnly) {
     setBusy(testOnly ? 'test' : 'save')
@@ -58,13 +60,17 @@ export function ConnectForm({ initial, onSaved, saveLabel }) {
     setMsg({ good: false, text })
   }
 
-  return h('div', { className: 'td-form' },
+  const onEnter = (e) => { if (e.key === 'Enter' && !busy) submit(false) }
+
+  return h('div', { className: ['td-form', primary ? 'primary' : ''].join(' '), onKeyDown: onEnter },
     h(Field, { label: t('setup_address'), type: 'text', value: address, onChange: setAddress, placeholder: DEFAULT_ADDRESS, disabled: !!busy }),
-    h(Field, { label: t('setup_email'), type: 'email', value: email, onChange: setEmail, placeholder: 'admin@example.com', disabled: !!busy }),
-    h(Field, { label: t('setup_password'), type: 'password', value: password, onChange: setPassword, disabled: !!busy }),
-    h('div', { className: 'td-form-row' },
-      h(Pill, { small: true, disabled: !!busy, onClick: () => submit(true) }, busy === 'test' ? t('setup_testing') : t('setup_test')),
-      h(Pill, { small: true, dark: true, disabled: !!busy, onClick: () => submit(false) }, busy === 'save' ? t('setup_saving') : (saveLabel || t('setup_save')))),
+    h(Field, { label: t('setup_email'), type: 'email', value: email, onChange: setEmail, placeholder: 'admin@example.com', disabled: !!busy, autoFocus: !!primary }),
+    h(Field, { label: t('setup_password'), hint: primary ? t('kept_here') : undefined, type: 'password', value: password, onChange: setPassword, disabled: !!busy }),
+    primary
+      ? h(Pill, { dark: true, className: 'td-wide', disabled: !!busy || !email.trim() || !password, onClick: () => submit(false) }, busy ? t('connecting') : t('connect'))
+      : h('div', { className: 'td-form-row' },
+        h(Pill, { small: true, disabled: !!busy, onClick: () => submit(true) }, busy === 'test' ? t('setup_testing') : t('setup_test')),
+        h(Pill, { small: true, dark: true, disabled: !!busy, onClick: () => submit(false) }, busy === 'save' ? t('setup_saving') : (saveLabel || t('setup_save')))),
     msg ? h('div', { className: ['td-form-msg', msg.good ? 'ok' : 'bad'].join(' ') }, msg.text) : null)
 }
 
@@ -90,7 +96,7 @@ export function RunCard({ setup, onDone, small }) {
     const { ok, data } = await postJSON('/service/create', body)
     setBusy(false)
     if (ok) {
-      setMsg({ good: true, text: t('run_created', { email: (data && data.email) || '', path: (data && data.env_path) || 'trek.env' }) })
+      setMsg({ good: true, text: t('run_created', { email: (data && data.email) || '' }) })
       if (onDone) onDone()
       return
     }
@@ -100,9 +106,8 @@ export function RunCard({ setup, onDone, small }) {
   return h('div', { className: ['td-run', small ? 'small' : ''].join(' ') },
     canDocker ? null : h('div', { className: 'td-form-msg bad', style: { marginTop: 0 } }, t('setup_no_docker')),
     h('div', { className: 'td-form-row' },
-      h(Pill, { dark: true, disabled: busy || !canDocker, onClick: start }, h(Icon, { name: 'play', size: 16 }), busy ? t('setup_starting') : t('connect_run')),
+      h(Pill, { dark: true, className: small ? '' : 'td-wide', disabled: busy || !canDocker, onClick: start }, h(Icon, { name: 'play', size: 16 }), busy ? t('setup_starting') : t('connect_run')),
       h('button', { type: 'button', className: 'td-linkbtn', disabled: busy || !canDocker, onClick: () => setCustom((v) => !v), 'aria-expanded': custom }, t('run_custom'))),
-    h('p', { className: 'td-run-note' }, t('connect_run_note')),
     custom ? h('div', { className: 'td-form', style: { marginTop: 8 } },
       h(Field, { label: t('setup_email'), type: 'email', value: email, onChange: setEmail, placeholder: 'admin@example.com', disabled: busy }),
       h(Field, { label: t('setup_password'), hint: t('setup_password_hint'), type: 'password', value: password, onChange: setPassword, disabled: busy }),
@@ -110,7 +115,7 @@ export function RunCard({ setup, onDone, small }) {
     msg ? h('div', { className: ['td-form-msg', msg.good ? 'ok' : 'bad'].join(' ') }, msg.text) : null)
 }
 
-/** Shown instead of the trip page only while nothing connects on its own. Nothing is gated: Settings is one tap away. */
+/** Shown instead of the trip page only while nothing connects on its own. */
 export function ConnectPage({ status, onOpenSettings, onDone }) {
   const [setup, setSetup] = useState(null)
   useEffect(() => {
@@ -120,6 +125,7 @@ export function ConnectPage({ status, onOpenSettings, onDone }) {
   }, [])
   const trek = (status && status.trek) || {}
   const reachable = !!trek.reachable
+  const initial = setup ? { ...setup, trek_url: trek.url || setup.trek_url } : { trek_url: trek.url }
 
   return h('div', { className: 'td-scroll' },
     h('div', { className: 'td-settings-bar' },
@@ -127,11 +133,10 @@ export function ConnectPage({ status, onOpenSettings, onDone }) {
       h(Pill, { small: true, onClick: onOpenSettings }, h(Icon, { name: 'gear', size: 15 }), t('settings'))),
     h('div', { className: 'td-setup' },
       h('div', { className: 'td-setup-hero' },
-        h('h1', null, reachable ? t('connect_h1_login') : t('connect_h1')),
-        h('p', null, reachable ? t('connect_lead_login', { url: trek.url || '' }) : t('connect_lead'))),
+        h('h1', null, reachable ? t('connect_h1_login') : t('connect_h1'))),
       h('div', { className: 'td-setup-card' },
         reachable ? null : h(RunCard, { setup, onDone }),
-        h('div', { className: 'td-form-row', style: { marginTop: reachable ? 0 : 18 } },
-          h(Pill, { dark: reachable, onClick: onOpenSettings }, h(Icon, { name: 'gear', size: 16 }), reachable ? t('connect_enter_login') : t('connect_settings'))),
-        h('p', { className: 'td-run-note' }, reachable ? t('connect_login_note') : t('connect_settings_note')))))
+        reachable ? null : h('div', { className: 'td-or' }, h('span', null, t('or'))),
+        reachable ? null : h('h2', null, t('setup_have_title')),
+        h(ConnectForm, { initial, onSaved: onDone, primary: true }))))
 }

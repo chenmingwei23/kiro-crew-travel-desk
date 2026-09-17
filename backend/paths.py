@@ -12,18 +12,39 @@ before comparison, so a symlink inside the tree that points out of it is caught 
 """
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import re
 import sys
 from pathlib import Path
+from types import ModuleType
 from typing import Any
 
 _APP_ROOT = Path(__file__).resolve().parent.parent
-if str(_APP_ROOT) not in sys.path:
-    sys.path.insert(0, str(_APP_ROOT))
 
-from engine import deskpaths  # noqa: E402
+
+def engine_module(name: str) -> ModuleType:
+    """``engine/<name>.py`` of THIS checkout.
+
+    Inside the gateway this package is loaded under a per-app namespace
+    (``<app root>.backend``), and the namespace root's search path is the app
+    directory, so ``..engine`` resolves to our own ``engine/`` under the same
+    namespace -- unloaded with the app on uninstall/disable, re-imported fresh on
+    the next enable. A plain ``import engine`` would instead land in
+    ``sys.modules["engine"]``, survive a reinstall, and serve the PREVIOUS
+    version's code to the new backend. Tests and tooling import ``backend`` as a
+    top-level package, where a relative parent does not exist: they fall back to
+    the app root on ``sys.path``."""
+    try:
+        return importlib.import_module(f"..engine.{name}", __package__)
+    except ImportError:
+        if str(_APP_ROOT) not in sys.path:
+            sys.path.insert(0, str(_APP_ROOT))
+        return importlib.import_module(f"engine.{name}")
+
+
+deskpaths = engine_module("deskpaths")
 
 APP_NAME = deskpaths.APP_NAME
 DEFAULT_TREK_URL = deskpaths.DEFAULT_TREK_URL

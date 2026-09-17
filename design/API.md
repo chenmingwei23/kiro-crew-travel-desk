@@ -32,7 +32,7 @@ is not declared here.
  "leader_slot": "travel-desk-leader",
  "leader_slot_en": "travel-desk-leader-en",
  "leader_agent": "trip-tour-leader",
- "version": "1.1.0"}
+ "version": "1.2.0"}
 ```
 
 `connected` = reachable and the app can act on the service. `configured` = a

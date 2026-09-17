@@ -157,10 +157,11 @@ createRoot(document.getElementById('app')).render(h(mod.default))
 
 
 class State:
-    def __init__(self, data_dir: Path, empty: bool, setup: bool):
+    def __init__(self, data_dir: Path, empty: bool, setup: bool, nologin: bool = False):
         self.data_dir = data_dir
         self.empty = empty
-        self.setup = setup  # force first-run setup (setup_needed:true) until a connection is saved
+        self.setup = setup  # nothing answers: connect page with the one-click run + form
+        self.nologin = nologin  # the planner answers but no login is on file: sign-in form
         self._api = None
         self._lock = threading.Lock()
         # Chat slots the gateway would know. The Chinese leader conversation
@@ -282,6 +283,7 @@ def make_handler(state: State):
             result = {"reachable": True, "authenticated": True, "error": ""}
             if not test_only:
                 state.setup = False  # connection saved -> leave setup on the next status poll
+                state.nologin = False
                 _json(self, {"ok": True, "saved": True, **result})
             else:
                 _json(self, {"ok": True, "saved": False, **result})
@@ -318,27 +320,34 @@ def make_handler(state: State):
                                 "authenticated": None, "auth_error": "", "connected": False,
                                 "running": False, "healthy": False, "managed": False,
                                 "container": {"name": "travel-desk-trek", "running": None, "docker": False}}
+                    elif state.nologin:
+                        trek = {"url": TREK_URL, "reachable": True, "configured": False,
+                                "login_source": "ticket", "adopted_container": "",
+                                "authenticated": False, "auth_error": "no login on file", "connected": False,
+                                "running": True, "healthy": False, "managed": False,
+                                "container": {"name": "travel-desk-trek", "running": False, "docker": True, "exists": False}}
                     else:
                         trek = {"url": TREK_URL, "reachable": True, "configured": True,
                                 "login_source": "detected", "adopted_container": "",
                                 "authenticated": True, "auth_error": "", "connected": True,
                                 "running": True, "healthy": True, "managed": True,
                                 "container": {"name": "travel-desk-trek", "running": True, "docker": True}}
-                    _json(self, {"trek": trek, "setup_needed": bool(state.setup),
+                    _json(self, {"trek": trek, "setup_needed": bool(state.setup or state.nologin),
                                  "desk_root": str(DESK_ROOT), "leader_slot": "travel-desk-leader",
                                  "leader_slot_en": "travel-desk-leader-en",
-                                 "leader_agent": "trip-tour-leader", "version": "1.1.0"})
+                                 "leader_agent": "trip-tour-leader", "version": "1.2.0"})
                 elif route == "/setup":
                     _json(self, {"trek_url": TREK_URL,
-                                 "email": "" if state.setup else "admin@example.com",
-                                 "has_password": not state.setup, "has_ticket": False, "managed": not state.setup,
+                                 "email": "" if (state.setup or state.nologin) else "admin@example.com",
+                                 "has_password": not (state.setup or state.nologin), "has_ticket": bool(state.nologin),
+                                 "managed": not (state.setup or state.nologin),
                                  "env_path": str(DESK_ROOT / "trek.env"),
                                  "container": "travel-desk-trek", "image": "mauriceboe/trek",
                                  "desk_root": str(DESK_ROOT), "data_dir": str(state.data_dir),
                                  "port": _port_of(TREK_URL), "docker_available": True,
-                                 "reachable": not state.setup})
+                                 "reachable": not state.setup})  # nologin: answers, no login
                 elif route == "/trips":
-                    if state.empty or state.setup:
+                    if state.empty or state.setup or state.nologin:
                         _json(self, {"trips": [], "error": ""})
                         return
                     raw = state.api().list_trips()
@@ -405,11 +414,12 @@ def main() -> int:
     ap.add_argument("--port", type=int, default=8765)
     ap.add_argument("--empty", action="store_true", help="pretend there are no trips (empty state)")
     ap.add_argument("--setup", action="store_true", help="force first-run setup (setup_needed:true)")
+    ap.add_argument("--nologin", action="store_true", help="planner answers but no login is on file (sign-in state)")
     ap.add_argument("--data", default=os.environ.get("TD_HARNESS_DATA") or str(Path(os.environ.get("KIROCREW_SCRATCH", "/tmp")) / "td-harness-data"))
     args = ap.parse_args()
     data_dir = Path(args.data)
     data_dir.mkdir(parents=True, exist_ok=True)
-    srv = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(State(data_dir, args.empty, args.setup)))
+    srv = ThreadingHTTPServer(("127.0.0.1", args.port), make_handler(State(data_dir, args.empty, args.setup, args.nologin)))
     print(f"harness on http://127.0.0.1:{args.port}/  desk_root={DESK_ROOT}  trek={TREK_URL}  "
           f"empty={args.empty}  setup={args.setup}", flush=True)
     try:
