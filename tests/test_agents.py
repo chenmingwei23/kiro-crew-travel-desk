@@ -102,3 +102,21 @@ def test_roster_matches_agents_and_session_titles():
         for key in ("title", "duty", "title_en", "duty_en", "avatar_letter", "avatar_letter_en"):
             assert m.get(key), f"{m['id']} missing {key}"
         assert "trek" not in (m["duty"] + m["duty_en"]).lower(), m["id"]
+
+
+def test_whole_crew_pinned_to_one_model():
+    """One model for all 13, and the id is a kiro-cli one (bare, dotted)."""
+    models = {json.loads(p.read_text(encoding="utf-8")).get("model") for p in AGENT_FILES}
+    assert models == {"gpt-5.6-sol"}
+
+
+def test_leader_speaks_as_a_travel_company():
+    spec = json.loads((ROOT / "agents" / "trip-tour-leader.json").read_text(encoding="utf-8"))
+    prompt = spec["prompt"]
+    assert "## How I talk" in prompt
+    # the on-screen trip and mid-task questions are named duties, not folklore
+    assert "viewing.json" in prompt
+    assert "## Side questions while I am working" in prompt
+    # the words that must never reach the guest are called out as such
+    for kitchen in ("PASS/REVISE", "no paths, no ids", "sentinel"):
+        assert kitchen in prompt

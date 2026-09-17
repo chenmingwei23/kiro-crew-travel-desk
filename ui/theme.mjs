@@ -179,6 +179,22 @@ const CSS = `
 .td-showmap { position: absolute; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 35; height: 48px; padding: 0 22px; font-size: 15px; box-shadow: 0 4px 14px rgba(0,0,0,.25); }
 .td-toast { position: absolute; left: 50%; bottom: 92px; transform: translateX(-50%); z-index: 36; padding: 10px 16px; border-radius: 12px; background: ${T.text}; color: #fff; font-size: 13px; font-weight: 600; box-shadow: 0 6px 16px rgba(0,0,0,.2); }
 
+/* ── workbench: the conversation fills the page ───────────────────────── */
+.td-benchbtn { width: 32px; height: 32px; margin-left: auto; flex-shrink: 0; }
+.td-benchpage { display: flex; flex-direction: column; overflow: hidden; }
+.td-bench { flex: 1; min-height: 0; display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 24px; max-width: 1360px; width: 100%; margin: 0 auto; padding: 24px 32px 28px; box-sizing: border-box; align-items: stretch; }
+.td-benchrail { display: flex; flex-direction: column; min-height: 0; border: 1px solid ${T.line}; border-radius: 16px; background: #fff; overflow: hidden; }
+.td-benchrail .hd { padding: 18px 18px 10px; border-bottom: 1px solid ${T.line2}; }
+.td-benchrail .hd .t { font-size: 15px; font-weight: 600; }
+.td-benchrail .hd .s { font-size: 12px; color: ${T.muted}; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-benchrail .td-teamlist { flex: 1; min-height: 0; overflow: auto; padding: 6px 10px 10px; }
+.td-benchtrip { display: flex; align-items: center; gap: 10px; margin: 0; padding: 14px 18px; border: 0; border-top: 1px solid ${T.line2}; background: ${T.bg2}; color: ${T.text}; cursor: pointer; text-align: left; font: inherit; }
+.td-benchtrip:hover { background: ${T.line2}; }
+.td-benchtrip .n { display: block; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.td-benchtrip .d { display: block; font-size: 12px; color: ${T.muted}; }
+.td-chatcard.td-benchchat { height: auto; max-height: none; min-height: 0; }
+@media (max-width: 900px) { .td-bench { grid-template-columns: minmax(0, 1fr); } .td-benchrail { display: none; } }
+
 /* ── empty state ──────────────────────────────────────────────────────── */
 .td-empty { max-width: 720px; margin: 0 auto; padding: 72px 32px 120px; text-align: center; }
 .td-empty h1 { margin: 0 0 12px; font-size: 32px; font-weight: 700; letter-spacing: -.01em; }
@@ -391,6 +407,8 @@ const PATHS = {
   share: ['M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8', 'M16 6l-4-4-4 4', 'M12 2v13'],
   more: ['M12 12h.01', 'M19 12h.01', 'M5 12h.01'],
   x: ['M18 6 6 18', 'M6 6l12 12'],
+  expand: ['M15 3h6v6', 'M9 21H3v-6', 'M21 3l-7 7', 'M3 21l7-7'],
+  shrink: ['M4 14h6v6', 'M20 10h-6V4', 'M14 10l7-7', 'M3 21l7-7'],
   chat: ['M21 11.5a8.4 8.4 0 0 1-9 8.4 8.6 8.6 0 0 1-3.8-.9L3 21l1.9-5.7A8.4 8.4 0 0 1 3 11.5a8.4 8.4 0 0 1 9-8.4 8.4 8.4 0 0 1 9 8.4z'],
   clock: ['M12 12m-9 0a9 9 0 1 0 18 0a9 9 0 1 0-18 0', 'M12 6v6l4 2'],
   bed: ['M2 4v16', 'M2 8h18a2 2 0 0 1 2 2v10', 'M2 17h20', 'M6 8v9'],

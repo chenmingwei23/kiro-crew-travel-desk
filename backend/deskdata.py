@@ -8,6 +8,7 @@ rather than raising.
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -94,6 +95,43 @@ def list_local_trips(root: Path) -> list[dict[str, Any]]:
         )
     out.sort(key=lambda t: t["updated_at"], reverse=True)
     return out
+
+
+def slug_for_trip_id(root: Path, trip_id: int) -> str | None:
+    """The desk folder whose pushed record names this trip-planner id, or None."""
+    for entry in list_local_trips(root):
+        rec = entry.get("trek")
+        if isinstance(rec, dict) and str(rec.get("trip_id")) == str(trip_id):
+            return str(entry["slug"])
+    return None
+
+
+def viewing_path(root: Path) -> Path:
+    return root / "viewing.json"
+
+
+def record_viewing(root: Path, trip_id: int, title: str, url: str, lang: str = "") -> dict[str, Any]:
+    """Note which trip the page is showing right now, so the leader can read
+    "this trip" / "my trip here" as the one on screen instead of guessing the
+    newest folder. One small file at the desk root, rewritten on every page
+    load; missing when nothing has been viewed yet."""
+    payload = {
+        "trip_id": int(trip_id),
+        "title": title,
+        "slug": slug_for_trip_id(root, trip_id),
+        "url": url,
+        "lang": lang,
+        "at": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+    }
+    target = viewing_path(root)
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        tmp = target.with_suffix(".json.tmp")
+        tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        tmp.replace(target)
+    except OSError:
+        pass  # a read-only desk still renders; the leader just falls back to asking
+    return payload
 
 
 def events_path(root: Path, slug: str) -> Path:

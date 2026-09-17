@@ -85,6 +85,12 @@ def main() -> int:
             # the chat card alone, at 2x, so type and colours can be judged
             card = pg.locator(".td-chatcard").first
             card.screenshot(path=str(out / f"chat-card{sfx}.png"))
+            # the workbench: the chat fills the page, the team stands on the left
+            pg.locator(".td-chatcard .td-benchbtn").first.click()
+            pg.wait_for_timeout(900)
+            shot(pg, "workbench")
+            pg.locator(".td-benchchat .td-benchbtn").first.click()
+            pg.wait_for_timeout(900)
             # scroll to day 1
             pg.evaluate("""() => {
               const el = [...document.querySelectorAll('.td-day-head')][0]; if (el) el.scrollIntoView({block: 'start'});

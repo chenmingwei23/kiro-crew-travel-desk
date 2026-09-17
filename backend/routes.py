@@ -500,6 +500,19 @@ async def get_trip(request: web.Request, ctx: Any) -> web.Response:
         base,
         lambda pid: photos.is_confirmed_miss(data_dir, pid),
     )
+    # The page polls this route for the trip it shows, so "the trip on screen"
+    # is exactly the last id asked for. The leader reads viewing.json before
+    # answering "this trip" (see agents/prompts/trip-tour-leader.md).
+    trip = view.get("trip") if isinstance(view, dict) else None
+    if isinstance(trip, dict):
+        await asyncio.to_thread(
+            deskdata.record_viewing,
+            desk_root(ctx),
+            trip_id,
+            str(trip.get("title") or ""),
+            str(trip.get("url") or ""),
+            str(request.query.get("lang") or ""),
+        )
     return ok(view)
 
 

@@ -113,18 +113,18 @@ function ChatEmbed({ placeholder }) {
   const rowsEn = [
     ['me', 'Oct 17–19, Great Ocean Road from Melbourne, 3 days by car, 2 people'],
     ['tools', '30 tool calls'],
-    ['leader', 'Kickoff done. Your traveller profile has no pace, budget or diet on file yet, so I am assuming mid-range and writing every assumption down. Building the skeleton now.'],
-    ['leader', ['Research in, debate settled, risk review passed: budget, safety and stamina all clear. Pushed to ', h('code', { key: 'c' }, 'trip #6'), ' — 14 stops across 3 days plus 2 nights booked, recorded in ', h('code', { key: 'c2' }, 'trek.json'), '.']],
-    ['leader', 'Two calls for you: the Cape Otway lighthouse on Day 2 is an optional 1.5 h detour, skip it if you are tight on time; the new Twelve Apostles visitor centre may need booking from late 2026 — I will confirm before you leave.'],
+    ['leader', 'Lovely — three days on the Great Ocean Road. The team is on it: hotels and the drive first, then I will come back with the days. I have assumed a relaxed pace and a mid-range budget; tell me if that is wrong.'],
+    ['leader', 'Your trip is ready — it is on the page beside this chat. Day 1 Melbourne to Apollo Bay with lunch in Lorne; Day 2 the rainforest walk and the Twelve Apostles at sunset; Day 3 the sea arches and the inland road home. Nights in Apollo Bay and Port Campbell.'],
+    ['leader', 'Two things before you go: the Cape Otway lighthouse on Day 2 is an optional 1.5 h detour, skip it if you are short on time; and the Twelve Apostles may need a booking from late 2026 — I will confirm that for you.'],
   ]
   const rows = location.port === '8766' ? [
     ['leader', '你好，我是团长。说一句去哪、几号到几号、几个人、自驾还是公交，团队就开始排。'],
   ] : en ? rowsEn : [
     ['me', '帮我规划 10 月 17 到 19 日墨尔本大洋路 3 天自驾，2 个人，墨尔本市区取车，不用再问我，缺的你假设并写明。'],
     ['tools', '30 tool calls'],
-    ['leader', '开场仪式完成。旅行者档案里节奏/预算/饮食都还是空的，我会按常识假设并写明。现在建骨架。'],
-    ['leader', ['推送成功：', h('code', { key: 'c' }, 'trip #5'), '，14 个 place（5+5+4）+ 2 段住宿，', h('code', { key: 'c2' }, 'trek.json'), ' 已记录。']],
-    ['leader', '两处要你拍板：Day2 的 Cape Otway 灯塔是可选支线（往返约 1.5h），赶时间可跳；十二门徒新游客中心 2026 年底或需预约，出行前我再帮你确认。'],
+    ['leader', '好的，大洋路三天自驾。团队已经开工：先定住宿和路线，排好每天再来找你。我先按轻松节奏、中等预算来安排，不对你随时说。'],
+    ['leader', '行程排好了，就在这个页面旁边。第一天墨尔本到阿波罗湾，洛恩吃午饭；第二天雨林步道，傍晚看十二门徒；第三天看海蚀拱，走内陆回墨尔本。两晚分别住阿波罗湾和坎贝尔港。'],
+    ['leader', '出发前两件事：第二天的奥特威角灯塔是可选支线，往返约一个半小时，赶时间可以跳过；十二门徒 2026 年底起可能要预约，我会帮你确认。'],
   ]
   const chips = en
     ? ['Add the safety notes to the itinerary timeline', 'Swap Night 2 for a cheaper option']

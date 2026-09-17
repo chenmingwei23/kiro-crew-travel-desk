@@ -7,10 +7,10 @@
 import { createElement as h, useState } from 'react'
 import { Icon, Pill, Photo, Legend, T } from './theme.mjs'
 import { TripMap } from './map.mjs'
-import { ChatCard, TripSwitcher, MoreMenu } from './parts.mjs'
+import { ChatCard, TeamList, TripSwitcher, MoreMenu } from './parts.mjs'
 import {
   fmtRange, fmtMD, weekday, daysUntil, timeRange, dayStops, staysForDay, dayFromTo, heroUrl, localizeHost,
-  sendToLeader, shortName,
+  sendToLeader, shortName, teamSummary,
 } from './data.mjs'
 import { t } from './i18n.mjs'
 
@@ -185,7 +185,7 @@ function DayBlock({ view, day, onShowMap }) {
 // Page
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function TripPage({ view, trips, hiddenTrips, currentId, onPickTrip, members, status, onRefresh, onShowMap, onToast, onOpenSettings, loading, error }) {
+export function TripPage({ view, trips, hiddenTrips, currentId, onPickTrip, members, status, onRefresh, onShowMap, onToast, onOpenSettings, onOpenBench, loading, error }) {
   const trekUrl = view ? view.trip.url : (status && status.trek && status.trek.url)
   return h('div', { className: 'td-scroll' },
     h(TopBar, { trips, hiddenTrips, currentId, onPickTrip, trekUrl, onRefresh, onShowMap, onToast, onOpenSettings }),
@@ -194,14 +194,43 @@ export function TripPage({ view, trips, hiddenTrips, currentId, onPickTrip, memb
       h('div', { className: 'td-main' },
         h(About, { view }),
         ...(view.days || []).flatMap((d) => [h('div', { key: `hr${d.day}`, className: 'td-hr' }), h(DayBlock, { key: `d${d.day}`, view, day: d, onShowMap })])),
-      h('div', { className: 'td-chatcol' }, h(ChatCard, { members }))) : null)
+      h('div', { className: 'td-chatcol' }, h(ChatCard, { members, onExpand: onOpenBench }))) : null)
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Workbench — the conversation fills the page while a trip is being planned
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The same conversation as the trip page's side card, at full size: the team
+ * roster stands on the left with each member's state, the chat takes the rest.
+ * For reading a finished plan the side card is enough; for planning, this. The
+ * choice is remembered (PREF.bench) and the card's corner button flips it.
+ */
+export function Workbench({ view, trips, hiddenTrips, currentId, onPickTrip, members, status, onRefresh, onShowMap, onToast, onOpenSettings, onCloseBench }) {
+  const trekUrl = view ? view.trip.url : (status && status.trek && status.trek.url)
+  const sum = teamSummary(members)
+  return h('div', { className: 'td-scroll td-benchpage' },
+    h(TopBar, { trips: trips || [], hiddenTrips, currentId, onPickTrip, trekUrl, onRefresh, onShowMap, onToast, onOpenSettings, hideMap: true }),
+    h('div', { className: 'td-bench' },
+      h('aside', { className: 'td-benchrail' },
+        h('div', { className: 'hd' },
+          h('div', { className: 't' }, t('team_header', { n: members.length })),
+          h('div', { className: 's' }, sum.online ? sum.text : t('team_none'))),
+        h(TeamList, { members }),
+        view ? h('button', { type: 'button', className: 'td-benchtrip', onClick: onCloseBench, title: t('bench_close') },
+          h(Icon, { name: 'list', size: 16 }),
+          h('span', { style: { minWidth: 0 } },
+            h('span', { className: 'n' }, view.trip.title),
+            h('span', { className: 'd' }, fmtRange(view.trip.start, view.trip.end)))) : null),
+      h(ChatCard, { members, className: 'td-benchchat', onShrink: onCloseBench, subtitle: t('bench_hint') })))
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Empty state — nothing planned yet
 // ─────────────────────────────────────────────────────────────────────────────
 
-export function EmptyState({ members, status, onRefresh, onToast, onOpenSettings, trips, hiddenTrips, currentId, onPickTrip }) {
+export function EmptyState({ members, status, onRefresh, onToast, onOpenSettings, onOpenBench, trips, hiddenTrips, currentId, onPickTrip }) {
   const [sent, setSent] = useState('')
   const trekUrl = status && status.trek && status.trek.url
   async function pick(text) {
@@ -215,6 +244,6 @@ export function EmptyState({ members, status, onRefresh, onToast, onOpenSettings
       h('h1', null, t('empty_h1')),
       h('p', null, t('empty_p1'), h('br'), t('empty_p2')),
       h('div', { className: 'chips' }, ...t('examples').map((ex) => h(Pill, { key: ex, onClick: () => pick(ex), disabled: !!sent, title: t('send_to_leader') }, ex))),
-      h(ChatCard, { members, chips: false, subtitle: t('leader_idle_fresh') }),
+      h(ChatCard, { members, chips: false, subtitle: t('leader_idle_fresh'), onExpand: onOpenBench }),
       hiddenTrips ? h('p', { style: { marginTop: 18, fontSize: 13, color: T.muted } }, t('hidden_trips', { n: hiddenTrips })) : null))
 }

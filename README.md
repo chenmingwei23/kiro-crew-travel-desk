@@ -103,6 +103,14 @@ Examples:
 - Oct 17–19, Great Ocean Road from Melbourne, 3 days by car, 2 people.
 - 10 月 17 到 19 日，墨尔本大洋路 3 天自驾，2 个人。
 
+The chat is a side card on the trip page. The corner button opens it as a
+workbench: the conversation fills the page and the crew stands on the left, each
+member with what they are doing. Use that while a trip is being planned; shrink
+it back to read the plan. You can talk to the leader while the crew is still
+working -- a side question is answered in passing, and the plan carries on. The
+leader speaks about the trip on your screen, and speaks as a travel company
+would: no file names, no ids, no verdicts.
+
 The interface language switch is in Settings. It defaults to your browser
 language: a browser reporting a Chinese locale opens in 中文, otherwise English.
 The crew writes each trip in the language you asked in, so a request in English
@@ -143,6 +151,11 @@ committed):
 
 Environment variables override the config: `TRAVEL_DESK_ROOT` (the desk root),
 `TREK_URL` (the planner address), `TREK_ENV` (the path to `trek.env`).
+
+All 13 agents are pinned to one model, `gpt-5.6-sol` (the `model` field of each
+file in `agents/`). The gateway treats that field as your preference: editing
+the installed copy under your Kiro agents directory survives an app refresh, and
+`scripts/build_agents.py` sets it for the shipped files.
 
 ## What runs in the background
 
@@ -317,6 +330,12 @@ kirocrew app enable travel-desk
 - 10 月 17 到 19 日，墨尔本大洋路 3 天自驾，2 个人。
 - Oct 17–19, Great Ocean Road from Melbourne, 3 days by car, 2 people.
 
+对话默认是行程页右侧的一张卡。卡角的按钮把它放大成工作台：对话铺满页面，
+旅行团站在左边，每个人在做什么一眼可见。规划时用工作台，看行程时缩回去。
+团队还在忙的时候也可以随时问团长，小问题顺手就答，规划不会中断。团长说的
+是你屏幕上这趟行程，而且像旅行公司的人那样说话：没有文件名、编号和"通过/
+不通过"。
+
 界面语言开关在设置里。它默认跟随你的浏览器语言：浏览器报告中文区域时打开中文，
 否则英文。旅行团按你提需求的语言写行程，所以用英文提需求，整趟就是英文。每种
 语言各有一段和团长的对话，各自显示各自的行程；切换语言就能看到用另一种语言
@@ -354,6 +373,10 @@ kirocrew app enable travel-desk
 
 环境变量会覆盖配置：`TRAVEL_DESK_ROOT`（desk root）、`TREK_URL`（行程服务地址）、
 `TREK_ENV`（`trek.env` 的路径）。
+
+13 个 agent 统一用一个模型 `gpt-5.6-sol`（`agents/` 下每个文件的 `model` 字段）。
+网关把这个字段当作你的偏好：改动已安装到 Kiro agents 目录里的那份，app 刷新后
+仍然保留；`scripts/build_agents.py` 负责给随包文件写上它。
 
 ## 后台会跑什么
 
