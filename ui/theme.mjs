@@ -110,6 +110,8 @@ const CSS = `
 .td-rail-fold:hover { background: ${T.bg2}; color: ${T.text}; }
 .td-rail-fold .td-avatars .td-avatar + .td-avatar { margin-left: -8px; }
 .td-crewrail .td-teamlist { padding: 0; }
+.td-avatarbtn { border: 0; background: none; padding: 0; cursor: pointer; display: inline-flex; border-radius: 9999px; flex-shrink: 0; }
+.td-avatarbtn:focus-visible { outline: 2px solid ${T.text}; outline-offset: 2px; }
 .td-backleader { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border: 0; border-radius: 9999px; background: ${T.bg2}; color: ${T.text}; cursor: pointer; flex-shrink: 0; }
 .td-backleader:hover { background: ${T.line2}; }
 

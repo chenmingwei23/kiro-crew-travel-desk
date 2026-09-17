@@ -1,7 +1,7 @@
 {
   "name": "travel-desk",
   "displayName": "Travel Desk",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "description": "A crew of 13 AI agents turns one sentence into a researched, debated, risk-checked day-by-day trip, shown on a photo-rich trip page and map and stored in your own self-hosted TREK trip planner.",
   "author": "chenmingwei23",
   "license": "MIT",

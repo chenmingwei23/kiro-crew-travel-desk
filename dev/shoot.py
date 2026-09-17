@@ -145,7 +145,7 @@ def main() -> int:
             # team popover on the trip page (the dark "back to trip" pill, language-independent)
             pg.locator(".td-ov.tr .td-pill.td-dark").click()
             pg.wait_for_timeout(1200)
-            pg.locator(".td-chatcard .td-avatars").click()
+            pg.locator(".td-chatcard .td-avatarbtn").click()
             pg.wait_for_timeout(600)
             shot(pg, "trip-team")
         b.close()
