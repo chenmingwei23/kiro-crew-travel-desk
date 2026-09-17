@@ -32,9 +32,9 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlsplit
 
-from engine import trek_api
-
 from . import paths
+
+trek_api = paths.engine_module("trek_api")
 
 _EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 _URL_RE = re.compile(r"^https?://[^\s/]+(:\d+)?(/.*)?$")
@@ -141,34 +141,60 @@ def is_local_url(url: str) -> bool:
     return host in LOOPBACK_HOSTS
 
 
+#: ``docker inspect -f`` template: name, image and the env list on one short line,
+#: because the subprocess helper keeps only the tail of a command's output and a
+#: full ``docker inspect`` JSON document is several times longer than that.
+INSPECT_FORMAT = "{{.Name}}\t{{.Config.Image}}\t{{json .Config.Env}}"
+
+
+def _login_from_env(env_items: list[Any], name: str, image: str) -> dict[str, str] | None:
+    env: dict[str, str] = {}
+    for item in env_items or []:
+        if isinstance(item, str) and "=" in item:
+            k, _, v = item.partition("=")
+            env[k] = v
+    email, password = env.get("ADMIN_EMAIL", "").strip(), env.get("ADMIN_PASSWORD", "")
+    if not (email and password):
+        return None
+    return {"container": name.lstrip("/"), "image": image, "email": email, "password": password}
+
+
 def login_from_inspect(raw: str) -> dict[str, str] | None:
     """The admin login a local container was started with, from ``docker inspect``
-    output (a JSON list). None unless a container carries both ADMIN_EMAIL and
-    ADMIN_PASSWORD. The password is returned to the caller only so it can be
-    tested and saved; it is never logged or sent to the browser."""
-    try:
-        records = json.loads(raw or "[]")
-    except ValueError:
+    output: either one ``INSPECT_FORMAT`` line per container, or the full JSON
+    list. None unless a container carries both ADMIN_EMAIL and ADMIN_PASSWORD.
+    The password is returned to the caller only so it can be tested and saved;
+    it is never logged or sent to the browser."""
+    text = (raw or "").strip()
+    if not text:
         return None
-    if isinstance(records, dict):
-        records = [records]
-    for rec in records if isinstance(records, list) else []:
-        if not isinstance(rec, dict):
+    if text[0] in "[{":  # full `docker inspect` JSON
+        try:
+            records = json.loads(text)
+        except ValueError:
+            return None
+        if isinstance(records, dict):
+            records = [records]
+        for rec in records if isinstance(records, list) else []:
+            if not isinstance(rec, dict):
+                continue
+            config = rec.get("Config") if isinstance(rec.get("Config"), dict) else {}
+            found = _login_from_env(config.get("Env") or [], str(rec.get("Name") or ""),
+                                    str(config.get("Image") or ""))
+            if found:
+                return found
+        return None
+    for line in text.splitlines():  # INSPECT_FORMAT lines
+        parts = line.split("\t", 2)
+        if len(parts) != 3:
             continue
-        config = rec.get("Config") if isinstance(rec.get("Config"), dict) else {}
-        env: dict[str, str] = {}
-        for item in config.get("Env") or []:
-            if isinstance(item, str) and "=" in item:
-                k, _, v = item.partition("=")
-                env[k] = v
-        email, password = env.get("ADMIN_EMAIL", "").strip(), env.get("ADMIN_PASSWORD", "")
-        if email and password:
-            return {
-                "container": str(rec.get("Name") or "").lstrip("/"),
-                "image": str(config.get("Image") or ""),
-                "email": email,
-                "password": password,
-            }
+        try:
+            env_items = json.loads(parts[2])
+        except ValueError:
+            continue
+        found = _login_from_env(env_items if isinstance(env_items, list) else [], parts[0], parts[1])
+        if found:
+            return found
     return None
 
 

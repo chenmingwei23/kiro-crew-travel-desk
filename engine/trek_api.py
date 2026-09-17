@@ -23,8 +23,11 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import deskpaths  # noqa: E402
+try:
+    from . import deskpaths  # imported as part of a package (the app backend)
+except ImportError:  # run as a script from the engine directory
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import deskpaths  # noqa: E402
 
 USER_AGENT = "travel-desk/1.0 (KiroCrew app)"
 

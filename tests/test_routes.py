@@ -211,15 +211,39 @@ def test_status_expired_ticket_without_login_points_at_settings(app_ctx, desk_ro
     routes._auth_cache.clear(); routes._detect_cache.clear()
     body = _body(_call(routes.get_status, app_ctx))
     assert body["trek"]["connected"] is False and body["setup_needed"] is True
-    assert "Settings" in body["trek"]["auth_error"]
+    assert body["trek"]["auth_error"] == "no login on file"
 
 
-_INSPECT = json.dumps([{
-    "Name": "/trek",
-    "Config": {"Image": "mauriceboe/trek",
-               "Env": ["PATH=/usr/bin", "ADMIN_EMAIL=owner@example.com",
-                       "ADMIN_PASSWORD=s3cret-from-container", "ENCRYPTION_KEY=" + "k" * 64]},
-}])
+def test_probe_errors_are_short_human_lines_not_tracebacks(app_ctx, desk_root, monkeypatch):
+    async def fake_run(argv, timeout=300.0):
+        return 127, "", "no docker here"
+
+    monkeypatch.setattr(routes, "_run", fake_run)
+    monkeypatch.setattr(routes.trek_api, "health", lambda url, timeout=3.0: True)
+    setup.write_env(app_ctx, {"ADMIN_EMAIL": "a@b.co", "ADMIN_PASSWORD": "longenough"})
+    cases = [
+        (routes.trek_api.TrekError(401, "POST /api/auth/login -> HTTP 401: {...}"), "login refused"),
+        (routes.trek_api.TrekError(500, "GET /api/auth/me -> HTTP 500: boom"), "service error (HTTP 500)"),
+        (AttributeError("'TrekAPI' object has no attribute 'me'"), "app error: AttributeError"),
+    ]
+    for exc, expected in cases:
+        monkeypatch.setattr(routes, "_trek_client", lambda ctx, exc=exc: _FakeSession(fail=exc))
+        routes._auth_cache.clear()
+        body = _body(_call(routes.get_status, app_ctx))
+        assert body["trek"]["auth_error"] == expected
+        assert "Traceback" not in json.dumps(body) and "attribute" not in body["trek"]["auth_error"]
+
+
+_ENV = ["PATH=/usr/bin", "ADMIN_EMAIL=owner@example.com",
+        "ADMIN_PASSWORD=s3cret-from-container", "ENCRYPTION_KEY=" + "k" * 64]
+#: what `docker inspect -f INSPECT_FORMAT` prints for the container
+_INSPECT = "/trek\tmauriceboe/trek\t" + json.dumps(_ENV) + "\n"
+#: the full `docker inspect` document (several KB in real life; the parser accepts it too)
+_INSPECT_JSON = json.dumps([{"Name": "/trek", "Config": {"Image": "mauriceboe/trek", "Env": _ENV},
+                             # what follows Config in a real document: mounts, host config, networks...
+                             "HostConfig": {"Binds": [f"/srv/trek/vol{i}:/app/vol{i}" for i in range(60)]},
+                             "NetworkSettings": {"Ports": {"3000/tcp": [{"HostIp": "127.0.0.1", "HostPort": "3000"}]}}}])
+assert len(_INSPECT_JSON) > 2000
 
 
 def _docker_with_trek(calls):
@@ -227,8 +251,10 @@ def _docker_with_trek(calls):
         calls.append(argv)
         if argv[:2] == ["docker", "ps"]:
             return 0, "af18c4082e4e\n", ""
-        if argv[:2] == ["docker", "inspect"] and argv[2] == "af18c4082e4e":
-            return 0, _INSPECT, ""
+        if argv[:2] == ["docker", "inspect"] and argv[-1] == "af18c4082e4e":
+            # the gateway helper keeps only the tail of the output, exactly like routes._run
+            assert argv[2:4] == ["-f", setup.INSPECT_FORMAT], argv
+            return 0, _INSPECT[-2000:], ""
         if argv[:2] == ["docker", "inspect"]:  # the app-managed container name: not there
             return 1, "", "Error: No such object"
         return 0, "", ""
@@ -290,13 +316,23 @@ def test_status_never_inspects_docker_for_a_remote_address(app_ctx, monkeypatch)
 
 
 def test_login_from_inspect_parses_env_and_ignores_containers_without_a_login():
-    assert setup.login_from_inspect(_INSPECT) == {
-        "container": "trek", "image": "mauriceboe/trek",
-        "email": "owner@example.com", "password": "s3cret-from-container"}
-    other = json.dumps([{"Name": "/db", "Config": {"Image": "postgres", "Env": ["POSTGRES_PASSWORD=x"]}}])
+    want = {"container": "trek", "image": "mauriceboe/trek",
+            "email": "owner@example.com", "password": "s3cret-from-container"}
+    assert setup.login_from_inspect(_INSPECT) == want
+    assert setup.login_from_inspect(_INSPECT_JSON) == want
+    other = "/db\tpostgres\t" + json.dumps(["POSTGRES_PASSWORD=x"])
     assert setup.login_from_inspect(other) is None
+    assert setup.login_from_inspect(other + "\n" + _INSPECT) == want  # second container wins
     assert setup.login_from_inspect("not json") is None
     assert setup.login_from_inspect("") is None
+
+
+def test_login_from_inspect_survives_the_output_cap():
+    """Regression: the full JSON document is longer than routes._run keeps, so a
+    tail-truncated document must not be what detection parses. The compact
+    template line stays whole under the same cap."""
+    assert setup.login_from_inspect(_INSPECT_JSON[-2000:]) is None  # what the old call produced
+    assert len(_INSPECT) < 2000 and setup.login_from_inspect(_INSPECT[-2000:]) is not None
 
 
 def test_is_local_url():

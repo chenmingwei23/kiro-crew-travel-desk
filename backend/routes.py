@@ -44,8 +44,7 @@ from aiohttp import web
 
 from kiro_crew.apps.route_registry import AppRoute
 
-from . import deskdata, paths, photos, setup, slots, trekdata  # paths puts the app root on sys.path
-from engine import trek_api  # noqa: E402,I001 — needs the sys.path entry above
+from . import deskdata, paths, photos, setup, slots, trekdata
 from .paths import (
     LEADER_AGENT,
     LEADER_SLOT,
@@ -57,6 +56,8 @@ from .paths import (
     valid_slug,
 )
 from .respond import err, guarded, log, ok
+
+trek_api = paths.engine_module("trek_api")  # this checkout's client, never a cached older one
 
 _SUBPROCESS_TIMEOUT = 300.0
 _AUTH_PROBE_TTL = 60.0
@@ -151,8 +152,17 @@ async def _auth_probe(ctx: Any, reachable: bool, can_login: bool) -> tuple[bool 
         try:
             _trek_client(ctx).me()
             return True, ""
-        except Exception as exc:  # noqa: BLE001 — reported, never raised
-            return False, str(exc)
+        except trek_api.TrekError as exc:
+            if exc.status in (401, 403):
+                return False, "login refused"
+            if exc.status == 0:
+                return False, "no login on file"
+            return False, f"service error (HTTP {exc.status})"
+        except OSError as exc:
+            return False, f"cannot reach the service: {exc.__class__.__name__}"
+        except Exception as exc:  # noqa: BLE001 — the page gets a short line, the log the traceback
+            log.warning("travel-desk: login probe failed", exc_info=True)
+            return False, f"app error: {exc.__class__.__name__}"
 
     try:
         okay, message = await asyncio.wait_for(asyncio.to_thread(_probe), timeout=8.0)
@@ -173,7 +183,9 @@ async def _detect_local_login(ctx: Any, url: str) -> dict[str, str] | None:
     if rc != 0 or not out.strip():
         return None
     for cid in out.split():
-        rc, raw, _ = await _run(["docker", "inspect", cid], timeout=10.0)
+        # one short line per container; a full `docker inspect` document is
+        # longer than the tail _run keeps, and would parse to nothing
+        rc, raw, _ = await _run(["docker", "inspect", "-f", setup.INSPECT_FORMAT, cid], timeout=10.0)
         if rc != 0:
             continue
         found = setup.login_from_inspect(raw)
@@ -202,8 +214,8 @@ async def _adopt_local_login(ctx: Any, url: str) -> str:
             log.info("travel-desk: adopted the admin login of local container %s (%s)",
                      found["container"], found["image"])
             return found["container"]
-        log.info("travel-desk: local container %s answers on %s but its admin login was refused",
-                 found["container"], url)
+        log.warning("travel-desk: local container %s answers on %s but its admin login was refused; "
+                    "enter the login on the Settings page", found["container"], url)
     _detect_cache[url] = now
     return ""
 
