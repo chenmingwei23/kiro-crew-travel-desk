@@ -152,6 +152,18 @@ def test_status_shape(app_ctx, monkeypatch):
     assert "proxy" not in body
 
 
+class _FakeSession:
+    """What ``_trek_client`` hands the probe: the probe asks who the ticket belongs to."""
+
+    def __init__(self, fail: Exception | None = None) -> None:
+        self._fail = fail
+
+    def me(self):
+        if self._fail:
+            raise self._fail
+        return {"id": 1}
+
+
 def test_status_ready_when_reachable_and_login_works(app_ctx, monkeypatch):
     async def fake_run(argv, timeout=300.0):
         return 0, "true", ""
@@ -159,13 +171,141 @@ def test_status_ready_when_reachable_and_login_works(app_ctx, monkeypatch):
     monkeypatch.setattr(routes, "_run", fake_run)
     monkeypatch.setattr(routes.trek_api, "health", lambda url, timeout=3.0: True)
     setup.write_env(app_ctx, {"ADMIN_EMAIL": "a@b.co", "ADMIN_PASSWORD": "longenough"})
-    monkeypatch.setattr(routes, "_trek_client", lambda ctx: object())
+    monkeypatch.setattr(routes, "_trek_client", lambda ctx: _FakeSession())
     routes._auth_cache.clear()
     body = _body(_call(routes.get_status, app_ctx))
     assert body["trek"]["configured"] is True
+    assert body["trek"]["login_source"] == "env"
     assert body["trek"]["authenticated"] is True
-    assert body["trek"]["healthy"] is True
+    assert body["trek"]["connected"] is True and body["trek"]["healthy"] is True
     assert body["setup_needed"] is False
+
+
+def test_status_connects_on_a_valid_ticket_without_any_login(app_ctx, desk_root, monkeypatch):
+    """An existing installation has a ticket the service issued earlier but no
+    login on file: the app works with the ticket instead of asking for a login."""
+    async def fake_run(argv, timeout=300.0):
+        return 127, "", "no docker here"  # nothing to adopt either
+
+    monkeypatch.setattr(routes, "_run", fake_run)
+    monkeypatch.setattr(routes.trek_api, "health", lambda url, timeout=3.0: True)
+    (desk_root / ".trek_token").write_text("eyJ.ticket.sig")
+    monkeypatch.setattr(routes, "_trek_client", lambda ctx: _FakeSession())
+    routes._auth_cache.clear(); routes._detect_cache.clear()
+    body = _body(_call(routes.get_status, app_ctx))
+    assert body["trek"]["configured"] is False
+    assert body["trek"]["login_source"] == "ticket"
+    assert body["trek"]["connected"] is True
+    assert body["setup_needed"] is False
+
+
+def test_status_expired_ticket_without_login_points_at_settings(app_ctx, desk_root, monkeypatch):
+    async def fake_run(argv, timeout=300.0):
+        return 127, "", "no docker here"
+
+    monkeypatch.setattr(routes, "_run", fake_run)
+    monkeypatch.setattr(routes.trek_api, "health", lambda url, timeout=3.0: True)
+    (desk_root / ".trek_token").write_text("stale")
+    boom = routes.trek_api.TrekError(0, "no login for the trip service: set it in the app's Settings page")
+    monkeypatch.setattr(routes, "_trek_client", lambda ctx: _FakeSession(fail=boom))
+    routes._auth_cache.clear(); routes._detect_cache.clear()
+    body = _body(_call(routes.get_status, app_ctx))
+    assert body["trek"]["connected"] is False and body["setup_needed"] is True
+    assert "Settings" in body["trek"]["auth_error"]
+
+
+_INSPECT = json.dumps([{
+    "Name": "/trek",
+    "Config": {"Image": "mauriceboe/trek",
+               "Env": ["PATH=/usr/bin", "ADMIN_EMAIL=owner@example.com",
+                       "ADMIN_PASSWORD=s3cret-from-container", "ENCRYPTION_KEY=" + "k" * 64]},
+}])
+
+
+def _docker_with_trek(calls):
+    async def fake_run(argv, timeout=300.0):
+        calls.append(argv)
+        if argv[:2] == ["docker", "ps"]:
+            return 0, "af18c4082e4e\n", ""
+        if argv[:2] == ["docker", "inspect"] and argv[2] == "af18c4082e4e":
+            return 0, _INSPECT, ""
+        if argv[:2] == ["docker", "inspect"]:  # the app-managed container name: not there
+            return 1, "", "Error: No such object"
+        return 0, "", ""
+    return fake_run
+
+
+def test_status_adopts_the_login_of_a_local_docker_service(app_ctx, desk_root, monkeypatch):
+    """No login on file, but a container publishing the port runs on this machine:
+    its admin login is tested, saved like a typed one, and the app is connected."""
+    calls: list[list[str]] = []
+    monkeypatch.setattr(routes, "_run", _docker_with_trek(calls))
+    monkeypatch.setattr(routes.trek_api, "health", lambda url, timeout=3.0: True)
+    tested = []
+    monkeypatch.setattr(routes.setup, "test_login",
+                        lambda url, email, pw: (tested.append((url, email, pw)) or
+                                                {"reachable": True, "authenticated": True, "error": ""}))
+    monkeypatch.setattr(routes, "_trek_client", lambda ctx: _FakeSession())
+    routes._auth_cache.clear(); routes._detect_cache.clear()
+    body = _body(_call(routes.get_status, app_ctx))
+    assert tested == [(body["trek"]["url"], "owner@example.com", "s3cret-from-container")]
+    env = setup.read_env(app_ctx)
+    assert env["ADMIN_EMAIL"] == "owner@example.com" and env["ADMIN_PASSWORD"] == "s3cret-from-container"
+    assert (desk_root / "trek.env").stat().st_mode & 0o777 == 0o600
+    assert body["trek"]["login_source"] == "detected" and body["trek"]["adopted_container"] == "trek"
+    assert body["trek"]["configured"] is True and body["trek"]["connected"] is True
+    assert body["setup_needed"] is False
+    ps = [c for c in calls if c[:2] == ["docker", "ps"]]
+    assert ps and f"publish={setup.port_of(body['trek']['url'])}" in ps[0]
+    # the password never travels through argv or the response
+    dumped = json.dumps(body)
+    assert "s3cret" not in dumped and not any("s3cret" in tok for c in calls for tok in c)
+
+
+def test_status_does_not_adopt_a_refused_login_and_backs_off(app_ctx, desk_root, monkeypatch):
+    calls: list[list[str]] = []
+    monkeypatch.setattr(routes, "_run", _docker_with_trek(calls))
+    monkeypatch.setattr(routes.trek_api, "health", lambda url, timeout=3.0: True)
+    monkeypatch.setattr(routes.setup, "test_login",
+                        lambda url, email, pw: {"reachable": True, "authenticated": False,
+                                                "error": "the service refused that email/password"})
+    routes._auth_cache.clear(); routes._detect_cache.clear()
+    body = _body(_call(routes.get_status, app_ctx))
+    assert body["trek"]["login_source"] == "none" and body["setup_needed"] is True
+    assert not (desk_root / "trek.env").exists()
+    n_ps = len([c for c in calls if c[:2] == ["docker", "ps"]])
+    _call(routes.get_status, app_ctx)  # within the back-off window: docker is not asked again
+    assert len([c for c in calls if c[:2] == ["docker", "ps"]]) == n_ps
+
+
+def test_status_never_inspects_docker_for_a_remote_address(app_ctx, monkeypatch):
+    calls: list[list[str]] = []
+    monkeypatch.setattr(routes, "_run", _docker_with_trek(calls))
+    monkeypatch.setattr(routes.trek_api, "health", lambda url, timeout=3.0: True)
+    monkeypatch.setattr(routes, "trek_url", lambda ctx: "http://trek.example.net:3000")
+    routes._auth_cache.clear(); routes._detect_cache.clear()
+    body = _body(_call(routes.get_status, app_ctx))
+    assert body["trek"]["login_source"] == "none"
+    assert not any(c[:2] == ["docker", "ps"] for c in calls)
+
+
+def test_login_from_inspect_parses_env_and_ignores_containers_without_a_login():
+    assert setup.login_from_inspect(_INSPECT) == {
+        "container": "trek", "image": "mauriceboe/trek",
+        "email": "owner@example.com", "password": "s3cret-from-container"}
+    other = json.dumps([{"Name": "/db", "Config": {"Image": "postgres", "Env": ["POSTGRES_PASSWORD=x"]}}])
+    assert setup.login_from_inspect(other) is None
+    assert setup.login_from_inspect("not json") is None
+    assert setup.login_from_inspect("") is None
+
+
+def test_is_local_url():
+    assert setup.is_local_url("http://127.0.0.1:3000")
+    assert setup.is_local_url("http://localhost:3000/")
+    assert setup.is_local_url("http://[::1]:3000")
+    assert not setup.is_local_url("http://trek.example.net:3000")
+    assert not setup.is_local_url("http://192.168.1.20:3000")
+    assert not setup.is_local_url("nonsense")
 
 
 # ---------------------------------------------------------------------------
@@ -495,6 +635,39 @@ def test_service_create_writes_env_and_runs_docker(app_ctx, desk_root, monkeypat
 
 def test_service_create_rejects_weak_input(app_ctx):
     req = _FakeJSONRequest({"email": "nope", "password": "short"}, match_info={"action": "create"})
+    resp = asyncio.run(routes.post_service(req, app_ctx))
+    assert resp.status == 400
+
+
+def test_service_create_with_blank_login_generates_one(app_ctx, desk_root, monkeypatch):
+    """One click: no email, no password typed. The app makes the admin login,
+    stores it in trek.env, and tells the page the email but never the password."""
+    calls = []
+
+    async def fake_run(argv, timeout=300.0):
+        calls.append(argv)
+        return 0, "abc123", ""
+
+    async def fake_wait(url, seconds=60.0):
+        return True
+
+    monkeypatch.setattr(routes, "_run", fake_run)
+    monkeypatch.setattr(routes, "_wait_healthy", fake_wait)
+    req = _FakeJSONRequest({}, match_info={"action": "create"})
+    resp = asyncio.run(routes.post_service(req, app_ctx))
+    assert resp.status == 200, _body(resp)
+    body = _body(resp)
+    env = setup.read_env(app_ctx)
+    assert body["email"] == env["ADMIN_EMAIL"] == setup.GENERATED_EMAIL
+    assert body["env_path"] == str(desk_root / "trek.env")
+    assert len(env["ADMIN_PASSWORD"]) >= 16
+    assert env["ADMIN_PASSWORD"] not in json.dumps(body)
+    assert not any(env["ADMIN_PASSWORD"] in tok for c in calls for tok in c)
+    assert (desk_root / "trek.env").stat().st_mode & 0o777 == 0o600
+
+
+def test_service_create_half_typed_login_is_still_validated(app_ctx):
+    req = _FakeJSONRequest({"email": "me@example.com", "password": ""}, match_info={"action": "create"})
     resp = asyncio.run(routes.post_service(req, app_ctx))
     assert resp.status == 400
 

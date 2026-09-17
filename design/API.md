@@ -22,7 +22,9 @@ is not declared here.
 
 ```json
 {"trek": {"url": "http://127.0.0.1:3000", "reachable": true, "configured": true,
-          "authenticated": true, "auth_error": "", "running": true, "healthy": true,
+          "login_source": "detected", "adopted_container": "trek",
+          "authenticated": true, "auth_error": "", "connected": true,
+          "running": true, "healthy": true,
           "managed": false, "container": {"name": "travel-desk-trek", "running": true,
                                           "docker": true, "exists": true}},
  "setup_needed": false,
@@ -30,24 +32,41 @@ is not declared here.
  "leader_slot": "travel-desk-leader",
  "leader_slot_en": "travel-desk-leader-en",
  "leader_agent": "trip-tour-leader",
- "version": "1.0.0"}
+ "version": "1.1.0"}
 ```
 
-`running` = the service answered HTTP; `healthy` = reachable and the saved login
-works. `setup_needed` is true until the service is reachable, configured and
-authenticated. Container state comes from `docker inspect`; `running` is `null`
-when Docker is not available.
+`connected` = reachable and the app can act on the service. `configured` = a
+login is on file in `trek.env`. `login_source` says how the app logs in:
+
+- `env` — the login on file.
+- `detected` — no login was on file, the address is loopback, and a Docker
+  container on this machine publishing that port carried `ADMIN_EMAIL` /
+  `ADMIN_PASSWORD` in its environment. The probe tested that login, saved it to
+  `trek.env` exactly like a typed one, and reports the container in
+  `adopted_container` on the request that adopted it (afterwards `env`). A
+  refused or absent container is remembered for a minute before Docker is asked
+  again; a remote address never triggers `docker` at all.
+- `ticket` — no login, but a ticket the service issued earlier
+  (`<desk root>/.trek_token`) still validates against `/api/auth/me`. The app
+  works with it until it expires; then `auth_error` names the Settings page.
+- `none` — nothing to try.
+
+`setup_needed` is simply `not connected`. The UI does not gate on it: it shows
+the connect page (one-click Docker run + a pointer to the Settings row) while
+nothing connects, and the trip page as soon as something does. `running` /
+`healthy` are the legacy names for `reachable` / `connected`. Container state
+comes from `docker inspect`; `running` is `null` when Docker is not available.
 
 ## GET /setup
 
-Connection settings the settings page may show — never the password or the
-encryption key.
+Connection settings the settings page may show — never the password, the
+encryption key, or the ticket.
 
 ```json
 {"trek_url": "http://127.0.0.1:3000", "email": "admin@example.com", "has_password": true,
- "managed": false, "container": "travel-desk-trek", "image": "mauriceboe/trek",
- "desk_root": "<desk root>", "data_dir": "<desk root>/trek", "port": 3000,
- "docker_available": true, "reachable": true}
+ "has_ticket": false, "managed": false, "container": "travel-desk-trek",
+ "image": "mauriceboe/trek", "desk_root": "<desk root>", "env_path": "<desk root>/trek.env",
+ "data_dir": "<desk root>/trek", "port": 3000, "docker_available": true, "reachable": true}
 ```
 
 ## POST /setup
@@ -67,10 +86,13 @@ The password is never echoed.
 `action` ∈ `create | start | stop | restart | upgrade | backup`. Every step is
 an argv list (no shell string), 300 s timeout. Unknown action → 400.
 
-- `create` — body `{"port", "email", "password"}`. Writes `trek.env` (generating
+- `create` — body `{"port", "email", "password"}`; `email` and `password` may
+  both be omitted, in which case the app generates the admin login
+  (`admin@travel-desk.local` + a random password). Writes `trek.env` (generating
   an at-rest encryption key), then runs the official image bound to loopback with
   its state under `<desk root>/trek/`. Returns `{"ok": true, "action": "create",
-  "url", "reachable", "output"}`.
+  "url", "reachable", "email", "env_path", "output"}` — the email in use, never
+  the password.
 - `start | stop | restart` — drive the app-managed container.
 - `upgrade` — `docker pull` → `docker rm -f` → run again (state kept by the two
   `-v` mounts).

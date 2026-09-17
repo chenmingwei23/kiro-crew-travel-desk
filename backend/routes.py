@@ -8,10 +8,12 @@ these handlers.
 
 Routes (design/API.md):
 
-    GET  /status               trip-service health, desk root, leader slot/agent, setup_needed
+    GET  /status               trip-service health + connection (connected, login_source), desk root,
+                               leader slot/agent, setup_needed (= not connected)
     GET  /setup                connection settings the UI may show (never the password)
     POST /setup                test (and unless test_only, save) a connection: url/email/password
     POST /service/{action}     create|start|stop|restart|upgrade|backup the app-managed Docker service
+                               (create with a blank login generates one)
     GET  /trips                trips in the service (empty + error on failure, 200)
     GET  /trip?id=             one trip's view model
     GET  /photos?id=           resolve + cache photos for a trip's places
@@ -19,6 +21,12 @@ Routes (design/API.md):
     GET  /org                  desk roster + live state + chat slot
     GET  /run?trip=            one trip: request head, artifact table, trek, events
     GET  /local-trips          trips/<slug> directories on disk
+
+Connection, in order of preference (nothing typed until the last one):
+a login on file in ``trek.env``; a service already running in Docker on this
+machine, whose admin login the status probe adopts from the container; a login
+ticket the service issued earlier (``.trek_token``) while it is still valid;
+finally the login row on the Settings page.
 
 Every read is anchored at deskRoot from ``data/config.json``. Unauthenticated
 callers get 401. The config READ endpoint the gateway owns
@@ -53,6 +61,9 @@ from .respond import err, guarded, log, ok
 _SUBPROCESS_TIMEOUT = 300.0
 _AUTH_PROBE_TTL = 60.0
 _auth_cache: dict[str, tuple[float, bool | None, str]] = {}
+#: url -> monotonic time a local-Docker adoption last found nothing (retried after the TTL)
+_DETECT_TTL = 60.0
+_detect_cache: dict[str, float] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -121,9 +132,14 @@ async def _container_state(ctx: Any) -> dict[str, Any]:
     return {"name": name, "running": out.strip() == "true", "docker": True, "exists": True}
 
 
-async def _auth_probe(ctx: Any, reachable: bool, configured: bool) -> tuple[bool | None, str]:
-    """Whether the saved login works, cached for a minute. None when it cannot be known."""
-    if not reachable or not configured:
+async def _auth_probe(ctx: Any, reachable: bool, can_login: bool) -> tuple[bool | None, str]:
+    """Whether the app can act on the service, cached for a minute. None when it
+    cannot be known (unreachable, or neither a login nor a ticket to try).
+
+    The probe asks the service who the ticket belongs to, so a stale cached
+    ticket is caught here: with a login on file it is renewed once; without one
+    the answer is False and ``auth_error`` says where to enter the login."""
+    if not reachable or not can_login:
         return None, ""
     key = trek_url(ctx)
     now = time.monotonic()
@@ -133,7 +149,7 @@ async def _auth_probe(ctx: Any, reachable: bool, configured: bool) -> tuple[bool
 
     def _probe() -> tuple[bool, str]:
         try:
-            _trek_client(ctx)
+            _trek_client(ctx).me()
             return True, ""
         except Exception as exc:  # noqa: BLE001 — reported, never raised
             return False, str(exc)
@@ -146,22 +162,78 @@ async def _auth_probe(ctx: Any, reachable: bool, configured: bool) -> tuple[bool
     return okay, message
 
 
+async def _detect_local_login(ctx: Any, url: str) -> dict[str, str] | None:
+    """The admin login of a service running in Docker on THIS machine and
+    publishing the configured port, or None. Loopback addresses only: a
+    container on another host is not ours to inspect."""
+    if not setup.is_local_url(url):
+        return None
+    port = setup.port_of(url)
+    rc, out, _ = await _run(["docker", "ps", "--filter", f"publish={port}", "--format", "{{.ID}}"], timeout=10.0)
+    if rc != 0 or not out.strip():
+        return None
+    for cid in out.split():
+        rc, raw, _ = await _run(["docker", "inspect", cid], timeout=10.0)
+        if rc != 0:
+            continue
+        found = setup.login_from_inspect(raw)
+        if found:
+            return found
+    return None
+
+
+async def _adopt_local_login(ctx: Any, url: str) -> str:
+    """No login on file: take the one a local Docker service was started with.
+
+    Tested before it is saved, saved exactly like a typed login, so from here on
+    the app renews its own ticket. Returns the container name, or "" when there
+    is nothing to adopt (remembered for a minute so polling stays cheap)."""
+    now = time.monotonic()
+    last = _detect_cache.get(url)
+    if last is not None and now - last < _DETECT_TTL:
+        return ""
+    found = await _detect_local_login(ctx, url)
+    if found:
+        result = await asyncio.to_thread(setup.test_login, url, found["email"], found["password"])
+        if result["authenticated"]:
+            await asyncio.to_thread(setup.save_connection, ctx, url, found["email"], found["password"])
+            _auth_cache.pop(url, None)
+            _detect_cache.pop(url, None)
+            log.info("travel-desk: adopted the admin login of local container %s (%s)",
+                     found["container"], found["image"])
+            return found["container"]
+        log.info("travel-desk: local container %s answers on %s but its admin login was refused",
+                 found["container"], url)
+    _detect_cache[url] = now
+    return ""
+
+
 async def _trek_status(ctx: Any) -> dict[str, Any]:
     url = trek_url(ctx)
     reachable = await asyncio.to_thread(trek_api.health, url)
     env = setup.read_env(ctx)
-    configured = bool(env.get("ADMIN_EMAIL") and env.get("ADMIN_PASSWORD"))
-    authenticated, auth_error = await _auth_probe(ctx, reachable, configured)
+    has_login = bool(env.get("ADMIN_EMAIL") and env.get("ADMIN_PASSWORD"))
+    login_source = "env" if has_login else ("ticket" if setup.has_ticket(ctx) else "none")
+    adopted = ""
+    if reachable and not has_login:
+        adopted = await _adopt_local_login(ctx, url)
+        if adopted:
+            has_login, login_source = True, "detected"
+    authenticated, auth_error = await _auth_probe(ctx, reachable, has_login or login_source == "ticket")
+    connected = bool(reachable and authenticated is True)
     container = await _container_state(ctx)
     return {
         "url": url,
         "reachable": reachable,
-        "configured": configured,
+        "configured": has_login,
+        "login_source": login_source,
+        "adopted_container": adopted,
         "authenticated": authenticated,
         "auth_error": auth_error,
+        "connected": connected,
         # legacy keys the first UI read: running = answers HTTP, healthy = usable
         "running": reachable,
-        "healthy": bool(reachable and (authenticated is True)),
+        "healthy": connected,
         "managed": bool(paths.app_config(ctx).get("trekManaged")),
         "container": container,
     }
@@ -177,11 +249,10 @@ def _app_version() -> str:
 @guarded
 async def get_status(request: web.Request, ctx: Any) -> web.Response:
     trek = await _trek_status(ctx)
-    setup_needed = not (trek["reachable"] and trek["configured"] and trek["authenticated"] is True)
     return ok(
         {
             "trek": trek,
-            "setup_needed": setup_needed,
+            "setup_needed": not trek["connected"],
             "desk_root": str(desk_root(ctx)),
             "leader_slot": LEADER_SLOT,
             "leader_slot_en": LEADER_SLOT_EN,
@@ -290,7 +361,7 @@ async def post_service(request: web.Request, ctx: Any) -> web.Response:
             port = int(body.get("port") or 3000)
             email = str(body.get("email") or "").strip()
             password = str(body.get("password") or "")
-            await asyncio.to_thread(setup.prepare_managed_service, ctx, email, password, port)
+            email = await asyncio.to_thread(setup.prepare_managed_service, ctx, email, password, port)
         except (setup.SetupError, ValueError) as exc:
             return err(str(exc), 400)
         steps = [["docker", "rm", "-f", paths.trek_container(ctx)], setup.docker_run_argv(ctx, port)]
@@ -309,7 +380,9 @@ async def post_service(request: web.Request, ctx: Any) -> web.Response:
         url = f"http://127.0.0.1:{port}"
         healthy = await _wait_healthy(url)
         _auth_cache.pop(url, None)
+        _detect_cache.pop(url, None)
         return ok({"ok": True, "action": action, "url": url, "reachable": healthy,
+                   "email": email, "env_path": str(paths.trek_env_path(ctx)),
                    "output": "\n".join(tails)[-2000:]})
 
     if action == "backup" and not paths.trek_data_dir(ctx).is_dir():

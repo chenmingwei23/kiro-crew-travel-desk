@@ -59,6 +59,18 @@ def main() -> int:
 
         if pg.locator(".td-setup").count() > 0:
             shot(pg, "setup")
+            # the one-click run with its optional custom login opened
+            if pg.locator(".td-linkbtn").count() > 0:
+                pg.locator(".td-linkbtn").first.click()
+                pg.wait_for_timeout(300)
+                shot(pg, "setup-custom")
+            # the Settings row the page points at (address + login live there)
+            pg.locator(".td-settings-bar .td-pill").first.click()
+            pg.wait_for_timeout(600)
+            if pg.locator(".td-adv-toggle").count() > 0:
+                pg.locator(".td-adv-toggle").first.click()
+                pg.wait_for_timeout(300)
+            shot(pg, "setup-settings")
         elif args.empty or pg.locator(".td-empty").count() > 0:
             shot(pg, "empty-state")
             pg.locator(".td-chatcard").first.screenshot(path=str(out / f"chat-card{sfx}.png"))

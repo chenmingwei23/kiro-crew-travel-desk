@@ -354,8 +354,13 @@ const CSS = `
 .td-setup-card h2 { margin: 0 0 4px; font-size: 18px; font-weight: 600; }
 .td-setup-card .sub { margin: 0 0 6px; font-size: 13px; color: ${T.muted}; line-height: 1.5; }
 .td-setup-card .grow { flex: 1; }
-.td-setup-skip { margin-top: 28px; text-align: center; }
-.td-setup-skip button { border: 0; background: none; padding: 8px; font-size: 14px; color: ${T.muted}; text-decoration: underline; cursor: pointer; }
+.td-setup .td-setup-card { max-width: 560px; margin: 0 auto; }
+.td-run.small .td-form-row { margin-top: 0; }
+.td-run-note { margin: 10px 0 0; font-size: 13px; color: ${T.muted}; line-height: 1.5; }
+.td-linkbtn { border: 0; background: none; padding: 8px 4px; font-size: 13px; color: ${T.muted}; text-decoration: underline; cursor: pointer; }
+.td-linkbtn:disabled { cursor: default; opacity: .5; }
+.td-adv-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; }
+.td-kv-note { font-weight: 400; color: ${T.muted}; margin-left: 8px; font-size: 12px; }
 `
 
 export function injectStyles() {
